@@ -29,6 +29,7 @@ const MAPPING = {
   trash: "delete",
   "chevron.up": "keyboard-arrow-up",
   "chevron.down": "keyboard-arrow-down",
+  "clock.fill": "schedule",
 } as IconMapping;
 
 /**

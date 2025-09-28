@@ -42,6 +42,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
+          title: "New",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="plus.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
           title: "Orders",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="doc.text.fill" color={color} />
