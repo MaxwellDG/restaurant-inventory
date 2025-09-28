@@ -1,16 +1,17 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useCategory } from "@/context/CategoryContext";
 import React, { useState } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function EditInventoryTab() {
   const [newCategory, setNewCategory] = useState("");
+  const { addCategory, state } = useCategory();
 
   const handleAddCategory = () => {
     if (newCategory.trim()) {
-      // TODO: Implement adding new category logic
-      console.log("Adding new category:", newCategory);
+      addCategory(newCategory);
       setNewCategory("");
     }
   };
@@ -51,6 +52,18 @@ export default function EditInventoryTab() {
           <IconSymbol name="plus" size={20} color="white" />
           <ThemedText style={styles.addButtonText}>Add Category</ThemedText>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.categoriesSection}>
+        <ThemedText style={styles.sectionTitle}>Existing Categories</ThemedText>
+        {state.categories.map((category) => (
+          <View key={category.id} style={styles.categoryItem}>
+            <ThemedText style={styles.categoryName}>{category.name}</ThemedText>
+            <ThemedText style={styles.categoryDate}>
+              Created: {category.createdAt.toLocaleDateString()}
+            </ThemedText>
+          </View>
+        ))}
       </View>
 
       <View style={styles.info}>
@@ -140,5 +153,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
+  },
+  categoriesSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16,
+    color: "#000",
+  },
+  categoryItem: {
+    backgroundColor: "white",
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E5E7",
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+  },
+  categoryDate: {
+    fontSize: 12,
+    color: "#666",
   },
 });
