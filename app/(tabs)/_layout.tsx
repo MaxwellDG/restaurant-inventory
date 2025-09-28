@@ -18,7 +18,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarStyle: { display: isLoginScreen ? "none" : "flex" },
+        // tabBarStyle: { display: isLoginScreen ? "none" : "flex" },
       }}
     >
       <Tabs.Screen
@@ -33,7 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Explore",
+          title: "Inventory",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="paperplane.fill" color={color} />
           ),
