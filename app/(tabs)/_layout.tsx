@@ -10,7 +10,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const pathname = usePathname();
 
-  const isLoginScreen = pathname === "/"
+  const isLoginScreen = pathname === "/";
 
   return (
     <Tabs
@@ -36,6 +36,15 @@ export default function TabLayout() {
           title: "Inventory",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="paperplane.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "Orders",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="list.bullet" color={color} />
           ),
         }}
       />
