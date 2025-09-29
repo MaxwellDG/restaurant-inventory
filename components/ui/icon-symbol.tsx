@@ -30,6 +30,8 @@ const MAPPING = {
   "chevron.up": "keyboard-arrow-up",
   "chevron.down": "keyboard-arrow-down",
   "clock.fill": "schedule",
+  "gearshape.fill": "settings",
+  "line.3.horizontal.decrease": "filter-list",
 } as IconMapping;
 
 /**

@@ -1,6 +1,7 @@
 import { Tabs, usePathname } from "expo-router";
 import React from "react";
 
+import { CustomTabBarButton } from "@/components/CustomTabBarButton";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -18,7 +19,13 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-        // tabBarStyle: { display: isLoginScreen ? "none" : "flex" },
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          // display: isLoginScreen ? "none" : "flex",
+          height: 90,
+          paddingBottom: 20,
+          overflow: "visible",
+        },
       }}
     >
       <Tabs.Screen
@@ -42,9 +49,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: "New",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="plus.fill" color={color} />
+          title: "New orders",
+          tabBarButton: (props) => (
+            <CustomTabBarButton {...props}>
+              <IconSymbol size={32} name="plus" color="white" />
+            </CustomTabBarButton>
           ),
         }}
       />
@@ -54,6 +63,15 @@ export default function TabLayout() {
           title: "Orders",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="doc.text.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape.fill" color={color} />
           ),
         }}
       />

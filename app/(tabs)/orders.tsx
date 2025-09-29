@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCategory } from "@/context/CategoryContext";
+import { useOrders } from "@/context/OrdersContext";
 import { mockInventoryItems } from "@/data/mockData";
 import React, { useState } from "react";
 import {
@@ -25,7 +26,7 @@ export default function OrdersScreen() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { state: ordersState, addOrder, clearAllOrders } = useOrders();
   const { state: categoryState } = useCategory();
 
   // Get items for the selected category
@@ -47,7 +48,7 @@ export default function OrdersScreen() {
         createdAt: new Date(),
       };
 
-      setOrders((prev) => [newOrder, ...prev]); // Add to beginning of list
+      addOrder(newOrder);
       setShowModal(false);
       setSelectedCategory("");
       setSelectedItem("");
@@ -57,11 +58,12 @@ export default function OrdersScreen() {
   };
 
   const handleDeleteOrder = (orderId: string) => {
-    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    // TODO: Implement delete functionality with context
+    Alert.alert("Delete", "Delete functionality coming soon!");
   };
 
   const handleClearAllOrders = () => {
-    setOrders([]);
+    clearAllOrders();
     setShowClearModal(false);
   };
 
@@ -71,9 +73,9 @@ export default function OrdersScreen() {
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
             <ThemedText type="title" style={styles.title}>
-              New
+              New Order
             </ThemedText>
-            {orders.length > 0 && (
+            {ordersState.orders.length > 0 && (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={() => setShowClearModal(true)}
@@ -96,14 +98,14 @@ export default function OrdersScreen() {
         style={styles.ordersList}
         showsVerticalScrollIndicator={false}
       >
-        {orders.length === 0 ? (
+        {ordersState.orders.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
               No orders yet. Tap the + button to create your first order.
             </ThemedText>
           </View>
         ) : (
-          orders.map((order, index) => (
+          ordersState.orders.map((order, index) => (
             <View key={order.id} style={styles.orderCard}>
               <View style={styles.orderHeader}>
                 <View style={styles.orderHeaderLeft}>
@@ -125,30 +127,26 @@ export default function OrdersScreen() {
                   />
                 </TouchableOpacity>
               </View>
-              <ThemedText style={styles.orderDate}>
-                {order.createdAt.toLocaleDateString()} at{" "}
-                {order.createdAt.toLocaleTimeString()}
-              </ThemedText>
             </View>
           ))
         )}
       </ScrollView>
 
       {/* Submit Button */}
-      {orders.length > 0 && (
+      {ordersState.orders.length > 0 && (
         <View style={styles.submitContainer}>
           <TouchableOpacity
             style={styles.submitButton}
             onPress={() => {
               Alert.alert(
                 "Orders Submitted",
-                `Submitted ${orders.length} order(s) successfully!`
+                `Submitted ${ordersState.orders.length} order(s) successfully!`
               );
-              setOrders([]); // Clear orders after submission
+              clearAllOrders(); // Clear orders after submission
             }}
           >
             <ThemedText style={styles.submitButtonText}>
-              Submit ({orders.length})
+              Submit ({ordersState.orders.length})
             </ThemedText>
           </TouchableOpacity>
         </View>
@@ -281,8 +279,8 @@ export default function OrdersScreen() {
               Clear All Orders
             </ThemedText>
             <ThemedText style={styles.clearModalMessage}>
-              Are you sure you want to remove all {orders.length} order(s) from
-              the list? This action cannot be undone.
+              Are you sure you want to remove all {ordersState.orders.length}{" "}
+              order(s) from the list? This action cannot be undone.
             </ThemedText>
             <View style={styles.clearModalButtons}>
               <TouchableOpacity
@@ -343,6 +341,24 @@ const styles = StyleSheet.create({
     color: "#FF3B30",
     fontWeight: "500",
   },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  filterButton: {
+    backgroundColor: "#F0F0F0",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
   plusButton: {
     backgroundColor: "#E3F2FD",
     borderRadius: 20,
@@ -376,8 +392,9 @@ const styles = StyleSheet.create({
   orderCard: {
     backgroundColor: "white",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    marginBottom: 4,
     borderWidth: 1,
     borderColor: "#E5E5E7",
     shadowColor: "#000",
@@ -390,12 +407,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 4,
+    height: 24,
   },
   orderHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
+    justifyContent: "flex-start",
   },
   orderNumber: {
     fontSize: 16,
@@ -403,16 +421,22 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     marginRight: 8,
     minWidth: 20,
+    textAlignVertical: "center",
+    lineHeight: 24,
   },
   orderText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#000",
     flex: 1,
+    textAlignVertical: "center",
+    lineHeight: 24,
   },
   deleteButton: {
     padding: 8,
     marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   orderDate: {
     fontSize: 14,
@@ -489,7 +513,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 12,
   },
   categoryScroll: {
     maxHeight: 50,
@@ -521,7 +544,6 @@ const styles = StyleSheet.create({
   itemOption: {
     backgroundColor: "#F8F9FA",
     padding: 12,
-    marginBottom: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E5E5E7",
@@ -603,14 +625,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#000",
-    marginBottom: 12,
     textAlign: "center",
   },
   clearModalMessage: {
     fontSize: 16,
     color: "#666",
     lineHeight: 22,
-    marginBottom: 24,
     textAlign: "center",
   },
   clearModalButtons: {

@@ -952,7 +952,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
   },
   itemName: {
     fontSize: 18,
@@ -1044,7 +1043,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 8,
   },
   categoryScroll: {
     maxHeight: 50,
