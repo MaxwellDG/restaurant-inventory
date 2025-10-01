@@ -28,8 +28,6 @@ export default function HistoryScreen() {
     });
   };
 
-  console.log("sate: ", state);
-
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
@@ -81,6 +79,9 @@ export default function HistoryScreen() {
                   <View style={styles.expandedContent}>
                     <ThemedText style={styles.orderText}>
                       {order.item} from {order.category}
+                    </ThemedText>
+                    <ThemedText style={styles.orderUser}>
+                      Created by: {order.user}
                     </ThemedText>
                     <ThemedText style={styles.orderDate}>
                       {order.createdAt.toLocaleDateString()} at{" "}
@@ -160,7 +161,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
   },
   orderHeaderLeft: {
     flexDirection: "row",
@@ -185,6 +185,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
     flex: 1,
+  },
+  orderUser: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#666",
+    marginTop: 4,
   },
   orderDate: {
     fontSize: 14,

@@ -4,6 +4,7 @@ export interface Order {
   id: string;
   item: string;
   category: string;
+  user: string;
   createdAt: Date;
 }
 
@@ -20,33 +21,38 @@ type OrdersAction =
 const initialState: OrdersState = {
   orders: [
     {
-      id: "order-1",
+      id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       item: "Chicken Breast",
       category: "Proteins",
+      user: "John Smith",
       createdAt: new Date("2024-01-15T10:30:00"),
     },
     {
-      id: "order-2",
+      id: "b2c3d4e5-f6g7-8901-bcde-f23456789012",
       item: "Tomatoes",
       category: "Vegetables",
+      user: "Sarah Johnson",
       createdAt: new Date("2024-01-15T09:15:00"),
     },
     {
-      id: "order-3",
+      id: "c3d4e5f6-g7h8-9012-cdef-345678901234",
       item: "Olive Oil",
       category: "Pantry",
+      user: "Mike Wilson",
       createdAt: new Date("2024-01-14T16:45:00"),
     },
     {
-      id: "order-4",
+      id: "d4e5f6g7-h8i9-0123-def0-456789012345",
       item: "Salmon Fillet",
       category: "Proteins",
+      user: "Emily Davis",
       createdAt: new Date("2024-01-14T14:20:00"),
     },
     {
-      id: "order-5",
+      id: "e5f6g7h8-i9j0-1234-ef01-567890123456",
       item: "Rice",
       category: "Grains",
+      user: "John Smith",
       createdAt: new Date("2024-01-13T11:00:00"),
     },
   ],

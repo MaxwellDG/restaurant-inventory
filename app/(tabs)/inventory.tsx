@@ -7,15 +7,17 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
+  Switch,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
 export default function InventoryScreen() {
-  const [activeTab, setActiveTab] = useState<"inventory" | "edit">("inventory");
+  const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
   const [inventoryItems, setInventoryItems] =
     useState<InventoryItem[]>(mockInventoryItems);
   const {
@@ -55,12 +57,49 @@ export default function InventoryScreen() {
   const [selectedEditItem, setSelectedEditItem] = useState("");
   const [editItemName, setEditItemName] = useState("");
 
+  // Manual Entry modal state
+  const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+  const [isBuying, setIsBuying] = useState(true); // true = buying, false = selling
+  const [selectedManualCategory, setSelectedManualCategory] = useState("");
+  const [selectedManualItem, setSelectedManualItem] = useState("");
+  const [quantityToSell, setQuantityToSell] = useState(0);
+
+  // Handle toggle between buying and selling
+  const handleToggleChange = (newIsBuying: boolean) => {
+    setIsBuying(newIsBuying);
+  };
+
   // Get items for the selected edit category
   const editCategoryItems = selectedEditItemCategory
     ? inventoryItems.filter(
         (item) => item.category === selectedEditItemCategory
       )
     : [];
+
+  // Get items for the selected manual entry category
+  const manualCategoryItems = selectedManualCategory
+    ? inventoryItems.filter((item) => item.category === selectedManualCategory)
+    : [];
+
+  // Get the selected item's quantity for the slider
+  const selectedItemQuantity = selectedManualItem
+    ? inventoryItems.find(
+        (item) =>
+          item.name === selectedManualItem &&
+          item.category === selectedManualCategory
+      )?.quantity || 0
+    : 0;
+
+  // Adjust quantity when switching to selling mode or when item changes
+  useEffect(() => {
+    if (
+      !isBuying &&
+      selectedManualItem &&
+      quantityToSell > selectedItemQuantity
+    ) {
+      setQuantityToSell(selectedItemQuantity);
+    }
+  }, [isBuying, selectedManualItem, selectedItemQuantity, quantityToSell]);
 
   // Initialize expanded sections based on categories from context
   const [expandedSections, setExpandedSections] = useState<{
@@ -81,10 +120,10 @@ export default function InventoryScreen() {
     return acc;
   }, {} as { [key: string]: InventoryItem[] });
 
-  // Ensure we always start on "My Inventory" tab when navigating to this screen
+  // Ensure we always start on "Edit" tab when navigating to this screen
   useFocusEffect(
     useCallback(() => {
-      setActiveTab("inventory");
+      setActiveTab("edit");
     }, [])
   );
 
@@ -281,6 +320,26 @@ export default function InventoryScreen() {
     }
   };
 
+  const handleManualEntrySubmit = () => {
+    if (selectedManualCategory && selectedManualItem) {
+      const action = isBuying ? "buying" : "selling";
+      const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
+      Alert.alert(
+        "Success",
+        `Manual entry submitted: ${action} ${selectedManualItem} from ${selectedManualCategory}${quantityText}`
+      );
+
+      // Reset form and close modal
+      setSelectedManualCategory("");
+      setSelectedManualItem("");
+      setQuantityToSell(0);
+      setIsBuying(true);
+      setShowManualEntryModal(false);
+    } else {
+      Alert.alert("Error", "Please select both category and item");
+    }
+  };
+
   const renderInventoryItem = ({ item }: { item: InventoryItem }) => (
     <ThemedView style={styles.itemCard}>
       <View style={styles.itemHeader}>
@@ -338,6 +397,19 @@ export default function InventoryScreen() {
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
+          style={[styles.tab, activeTab === "edit" && styles.activeTab]}
+          onPress={() => setActiveTab("edit")}
+        >
+          <ThemedText
+            style={[
+              styles.tabText,
+              activeTab === "edit" && styles.activeTabText,
+            ]}
+          >
+            Update
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === "inventory" && styles.activeTab]}
           onPress={() => setActiveTab("inventory")}
         >
@@ -348,19 +420,6 @@ export default function InventoryScreen() {
             ]}
           >
             My Inventory
-          </ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "edit" && styles.activeTab]}
-          onPress={() => setActiveTab("edit")}
-        >
-          <ThemedText
-            style={[
-              styles.tabText,
-              activeTab === "edit" && styles.activeTabText,
-            ]}
-          >
-            Edit
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -379,6 +438,16 @@ export default function InventoryScreen() {
           </View>
         ) : (
           <View style={styles.editContainer}>
+            {/* Manual Entry Button */}
+            <TouchableOpacity
+              style={styles.manualEntryButton}
+              onPress={() => setShowManualEntryModal(true)}
+            >
+              <ThemedText style={styles.manualEntryButtonText}>
+                Manual Entry
+              </ThemedText>
+            </TouchableOpacity>
+
             {/* Category Section */}
             <View style={styles.sectionHeader}>
               <ThemedText style={styles.sectionHeaderText}>Category</ThemedText>
@@ -421,50 +490,6 @@ export default function InventoryScreen() {
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
                       Add Category
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </ThemedView>
-
-            {/* Delete Category Dropdown */}
-            <ThemedView style={styles.dropdownSection}>
-              <TouchableOpacity
-                style={styles.dropdownHeader}
-                onPress={() => setShowDeleteCategory(!showDeleteCategory)}
-              >
-                <ThemedText style={styles.dropdownTitle}>
-                  Delete Category
-                </ThemedText>
-                <IconSymbol
-                  name={showDeleteCategory ? "chevron.up" : "chevron.down"}
-                  size={20}
-                  color="#666"
-                />
-              </TouchableOpacity>
-
-              {showDeleteCategory && (
-                <View style={styles.dropdownContent}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter exact category name"
-                    placeholderTextColor="#999"
-                    value={deleteCategoryName}
-                    onChangeText={setDeleteCategoryName}
-                    autoCapitalize="words"
-                  />
-
-                  <TouchableOpacity
-                    style={[
-                      styles.deleteButton,
-                      !deleteCategoryName.trim() && styles.deleteButtonDisabled,
-                    ]}
-                    onPress={handleDeleteCategory}
-                    disabled={!deleteCategoryName.trim()}
-                  >
-                    <IconSymbol name="trash" size={16} color="white" />
-                    <ThemedText style={styles.deleteButtonText}>
-                      Delete Category
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -543,6 +568,50 @@ export default function InventoryScreen() {
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
                       Update Category
+                    </ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ThemedView>
+
+            {/* Delete Category Dropdown */}
+            <ThemedView style={styles.dropdownSection}>
+              <TouchableOpacity
+                style={styles.dropdownHeader}
+                onPress={() => setShowDeleteCategory(!showDeleteCategory)}
+              >
+                <ThemedText style={styles.dropdownTitle}>
+                  Delete Category
+                </ThemedText>
+                <IconSymbol
+                  name={showDeleteCategory ? "chevron.up" : "chevron.down"}
+                  size={20}
+                  color="#666"
+                />
+              </TouchableOpacity>
+
+              {showDeleteCategory && (
+                <View style={styles.dropdownContent}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter exact category name"
+                    placeholderTextColor="#999"
+                    value={deleteCategoryName}
+                    onChangeText={setDeleteCategoryName}
+                    autoCapitalize="words"
+                  />
+
+                  <TouchableOpacity
+                    style={[
+                      styles.deleteButton,
+                      !deleteCategoryName.trim() && styles.deleteButtonDisabled,
+                    ]}
+                    onPress={handleDeleteCategory}
+                    disabled={!deleteCategoryName.trim()}
+                  >
+                    <IconSymbol name="trash" size={16} color="white" />
+                    <ThemedText style={styles.deleteButtonText}>
+                      Delete Category
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -829,6 +898,214 @@ export default function InventoryScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Manual Entry Modal */}
+      <Modal
+        visible={showManualEntryModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowManualEntryModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowManualEntryModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Have</ThemedText>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowManualEntryModal(false)}
+              >
+                <IconSymbol name="xmark" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Toggle Section */}
+            <View style={styles.modalSection}>
+              <View
+                style={[
+                  styles.toggleContainer,
+                  isBuying
+                    ? styles.toggleContainerBuying
+                    : styles.toggleContainerSelling,
+                ]}
+              >
+                <ThemedText style={styles.toggleLabel}>
+                  {isBuying ? "Buying" : "Selling"}
+                </ThemedText>
+                <Switch
+                  value={isBuying}
+                  onValueChange={handleToggleChange}
+                  trackColor={{ false: "#E5E5E7", true: "#007AFF" }}
+                  thumbColor={isBuying ? "#FFFFFF" : "#FFFFFF"}
+                />
+              </View>
+            </View>
+
+            {/* Category Selection */}
+            <View style={styles.modalSection}>
+              <ThemedText style={styles.modalSectionTitle}>Category</ThemedText>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.modalScroll}
+              >
+                {categoryState.categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.modalOption,
+                      selectedManualCategory === category.name &&
+                        styles.modalOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedManualCategory(category.name);
+                      setSelectedManualItem(""); // Clear item selection when category changes
+                    }}
+                  >
+                    <ThemedText
+                      style={[
+                        styles.modalOptionText,
+                        selectedManualCategory === category.name &&
+                          styles.modalOptionTextSelected,
+                      ]}
+                    >
+                      {category.name}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Item Selection */}
+            {selectedManualCategory && (
+              <View style={styles.modalSection}>
+                <ThemedText style={styles.modalSectionTitle}>Item</ThemedText>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.modalScroll}
+                >
+                  {manualCategoryItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.modalOption,
+                        selectedManualItem === item.name &&
+                          styles.modalOptionSelected,
+                      ]}
+                      onPress={() => setSelectedManualItem(item.name)}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.modalOptionText,
+                          selectedManualItem === item.name &&
+                            styles.modalOptionTextSelected,
+                        ]}
+                      >
+                        {item.name}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Quantity Selector - Always show */}
+            <View style={styles.modalSection}>
+              <ThemedText style={styles.modalSectionTitle}>
+                Quantity to {isBuying ? "Buy" : "Sell"}: {quantityToSell}
+              </ThemedText>
+              {selectedManualItem ? (
+                <>
+                  <View style={styles.quantityContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.quantityButton,
+                        quantityToSell <= 0 && styles.quantityButtonDisabled,
+                      ]}
+                      onPress={() =>
+                        setQuantityToSell(Math.max(0, quantityToSell - 1))
+                      }
+                      disabled={quantityToSell <= 0}
+                    >
+                      <ThemedText style={styles.quantityButtonText}>
+                        -
+                      </ThemedText>
+                    </TouchableOpacity>
+
+                    <View style={styles.quantityDisplay}>
+                      <ThemedText style={styles.quantityText}>
+                        {quantityToSell}
+                      </ThemedText>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.quantityButton,
+                        !isBuying &&
+                          quantityToSell >= selectedItemQuantity &&
+                          styles.quantityButtonDisabled,
+                      ]}
+                      onPress={() =>
+                        setQuantityToSell(
+                          isBuying
+                            ? quantityToSell + 1
+                            : Math.min(selectedItemQuantity, quantityToSell + 1)
+                        )
+                      }
+                      disabled={
+                        !isBuying && quantityToSell >= selectedItemQuantity
+                      }
+                    >
+                      <ThemedText style={styles.quantityButtonText}>
+                        +
+                      </ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                  <ThemedText style={styles.sliderHelpText}>
+                    {isBuying
+                      ? `Adding to inventory`
+                      : `Available: ${selectedItemQuantity} ${
+                          inventoryItems.find(
+                            (item) =>
+                              item.name === selectedManualItem &&
+                              item.category === selectedManualCategory
+                          )?.unit || "units"
+                        }`}
+                  </ThemedText>
+                </>
+              ) : (
+                <ThemedText style={styles.sliderHelpText}>
+                  Please select an item to set quantity
+                </ThemedText>
+              )}
+            </View>
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              style={[
+                styles.modalSubmitButton,
+                (!selectedManualCategory || !selectedManualItem) &&
+                  styles.modalSubmitButtonDisabled,
+              ]}
+              onPress={handleManualEntrySubmit}
+              disabled={!selectedManualCategory || !selectedManualItem}
+            >
+              <ThemedText style={styles.modalSubmitButtonText}>
+                Submit
+              </ThemedText>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </ThemedView>
   );
 }
@@ -1119,5 +1396,184 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  // Manual Entry Button styles
+  manualEntryButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  manualEntryButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 24,
+    width: "90%",
+    maxHeight: "80%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalSection: {
+    marginBottom: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E5E7",
+  },
+  toggleContainerBuying: {
+    backgroundColor: "#FFE0E0", // More visible red background
+    borderColor: "#FFB3B3", // More visible red border
+  },
+  toggleContainerSelling: {
+    backgroundColor: "#E0F5E0", // More visible green background
+    borderColor: "#B3E6B3", // More visible green border
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  modalScroll: {
+    maxHeight: 60,
+  },
+  modalOption: {
+    backgroundColor: "#F8F9FA",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "#E5E5E7",
+  },
+  modalOptionSelected: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  modalOptionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+  },
+  modalOptionTextSelected: {
+    color: "white",
+  },
+  modalSubmitButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  modalSubmitButtonDisabled: {
+    backgroundColor: "#A0A0A0",
+  },
+  modalSubmitButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  // Quantity selector styles
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 12,
+  },
+  quantityButton: {
+    backgroundColor: "#007AFF",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  quantityButtonDisabled: {
+    backgroundColor: "#A0A0A0",
+  },
+  quantityButtonText: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  quantityDisplay: {
+    backgroundColor: "#F8F9FA",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E5E7",
+    minWidth: 60,
+    alignItems: "center",
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  sliderHelpText: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
   },
 });
