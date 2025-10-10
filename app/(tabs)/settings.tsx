@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   ScrollView,
@@ -18,9 +19,26 @@ const dummyMembers = [
 export default function SettingsScreen() {
   const [isMembersExpanded, setIsMembersExpanded] = useState(false);
 
+  const handleExportData = () => {
+    router.push("/export-data");
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
+
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.exportButton}
+          onPress={handleExportData}
+        >
+          <View style={styles.exportContent}>
+            <IconSymbol name="square.and.arrow.up" size={24} color="#007AFF" />
+            <Text style={styles.exportText}>Export Data</Text>
+          </View>
+          <IconSymbol name="chevron.right" size={16} color="#999" />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.section}>
         <TouchableOpacity
@@ -76,6 +94,27 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 30,
+  },
+  exportButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  exportContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  exportText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginLeft: 12,
   },
   sectionHeader: {
     flexDirection: "row",

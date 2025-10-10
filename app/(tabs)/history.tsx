@@ -2,9 +2,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useOrders } from "@/context/OrdersContext";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
-  Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -15,6 +16,61 @@ export default function HistoryScreen() {
   const { state } = useOrders();
   const { orders } = state;
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+
+  // Filter orders based on selected date range
+  const filteredOrders = orders.filter((order) => {
+    // Get order date as timestamp (start of day)
+    const orderDate = new Date(order.createdAt);
+    const orderDateStartOfDay = new Date(
+      orderDate.getFullYear(),
+      orderDate.getMonth(),
+      orderDate.getDate()
+    );
+    const orderTimestamp = orderDateStartOfDay.getTime();
+
+    if (startDate && endDate) {
+      // Get start and end dates as timestamps (start of day)
+      const startDateStartOfDay = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate()
+      );
+      const endDateStartOfDay = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate()
+      );
+
+      const startTimestamp = startDateStartOfDay.getTime();
+      const endTimestamp = endDateStartOfDay.getTime();
+
+      return orderTimestamp >= startTimestamp && orderTimestamp <= endTimestamp;
+    } else if (startDate) {
+      const startDateStartOfDay = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate()
+      );
+      const startTimestamp = startDateStartOfDay.getTime();
+
+      return orderTimestamp >= startTimestamp;
+    } else if (endDate) {
+      const endDateStartOfDay = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate()
+      );
+      const endTimestamp = endDateStartOfDay.getTime();
+
+      return orderTimestamp <= endTimestamp;
+    }
+
+    return true; // Show all orders if no dates are selected
+  });
 
   const toggleExpanded = (orderId: string) => {
     setExpandedOrders((prev) => {
@@ -28,21 +84,65 @@ export default function HistoryScreen() {
     });
   };
 
+  const handleStartDatePress = () => {
+    setShowStartDatePicker(true);
+  };
+
+  const handleEndDatePress = () => {
+    setShowEndDatePicker(true);
+  };
+
+  const handleClearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  const onStartDateChange = (event: any, selectedDate?: Date) => {
+    setShowStartDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setStartDate(selectedDate);
+    }
+  };
+
+  const onEndDateChange = (event: any, selectedDate?: Date) => {
+    setShowEndDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <ThemedText type="title" style={styles.title}>
-            History
-          </ThemedText>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => {
-              Alert.alert("Filters", "Filter functionality coming soon!");
-            }}
-          >
-            <IconSymbol name="plus" size={20} color="#007AFF" />
-          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <ThemedText type="title" style={styles.title}>
+              History
+            </ThemedText>
+            {(startDate || endDate) && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={handleClearDates}
+              >
+                <ThemedText style={styles.clearButtonText}>Clear</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.dateFilterContainer}>
+            <TouchableOpacity
+              style={styles.dateFilterButton}
+              onPress={handleStartDatePress}
+            >
+              <IconSymbol name="calendar" size={20} color="#007AFF" />
+            </TouchableOpacity>
+            <ThemedText style={styles.dash}>—</ThemedText>
+            <TouchableOpacity
+              style={styles.dateFilterButton}
+              onPress={handleEndDatePress}
+            >
+              <IconSymbol name="calendar" size={20} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -50,14 +150,16 @@ export default function HistoryScreen() {
         style={styles.ordersList}
         showsVerticalScrollIndicator={false}
       >
-        {orders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
-              No orders found. Create your first order to see it here.
+              {orders.length === 0
+                ? "No orders found. Create your first order to see it here."
+                : "No orders found for the selected date range."}
             </ThemedText>
           </View>
         ) : (
-          orders.map((order, index) => {
+          filteredOrders.map((order, index) => {
             const isExpanded = expandedOrders.has(order.id);
             return (
               <TouchableOpacity
@@ -94,6 +196,24 @@ export default function HistoryScreen() {
           })
         )}
       </ScrollView>
+
+      {showStartDatePicker && (
+        <DateTimePicker
+          value={startDate || new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onStartDateChange}
+        />
+      )}
+
+      {showEndDatePicker && (
+        <DateTimePicker
+          value={endDate || new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onEndDateChange}
+        />
+      )}
     </ThemedView>
   );
 }
@@ -113,11 +233,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
   },
-  filterButton: {
+  dateFilterContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+  },
+  clearButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  dateFilterButton: {
     backgroundColor: "#F0F0F0",
     borderRadius: 20,
     width: 40,
@@ -129,6 +267,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
+  },
+  dash: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#666",
   },
   ordersList: {
     flex: 1,

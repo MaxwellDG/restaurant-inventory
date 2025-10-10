@@ -36,6 +36,7 @@ export default function InventoryScreen() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemQuantity, setNewItemQuantity] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("");
+  const [newItemPrice, setNewItemPrice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
   // Delete category dropdown state
@@ -56,6 +57,7 @@ export default function InventoryScreen() {
   const [selectedEditItemCategory, setSelectedEditItemCategory] = useState("");
   const [selectedEditItem, setSelectedEditItem] = useState("");
   const [editItemName, setEditItemName] = useState("");
+  const [editItemPrice, setEditItemPrice] = useState("");
 
   // Manual Entry modal state
   const [showManualEntryModal, setShowManualEntryModal] = useState(false);
@@ -169,6 +171,7 @@ export default function InventoryScreen() {
         quantity: parseInt(newItemQuantity) || 0,
         unit: newItemUnit.trim(),
         category: selectedCategory,
+        price: newItemPrice.trim() ? parseFloat(newItemPrice) : undefined,
       };
 
       setInventoryItems((prev) => [...prev, newItem]);
@@ -177,12 +180,13 @@ export default function InventoryScreen() {
       setNewItemName("");
       setNewItemQuantity("");
       setNewItemUnit("");
+      setNewItemPrice("");
       setSelectedCategory("");
       setShowAddItem(false);
 
       Alert.alert("Success", "Item added successfully!");
     } else {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert("Error", "Please fill in all required fields");
     }
   };
 
@@ -267,10 +271,11 @@ export default function InventoryScreen() {
           return;
         }
 
-        // Update item name
+        // Update item name and price
         const updatedItem = {
           ...itemToEdit,
           name: editItemName.trim(),
+          price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
         };
 
         setInventoryItems((prev) =>
@@ -278,11 +283,12 @@ export default function InventoryScreen() {
         );
         Alert.alert(
           "Success",
-          `Item "${selectedEditItem}" renamed to "${editItemName.trim()}" successfully!`
+          `Item "${selectedEditItem}" updated successfully!`
         );
         setSelectedEditItemCategory("");
         setSelectedEditItem("");
         setEditItemName("");
+        setEditItemPrice("");
         setShowEditItem(false);
       }
     } else {
@@ -669,6 +675,15 @@ export default function InventoryScreen() {
                     />
                   </View>
 
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Price (optional)"
+                    placeholderTextColor="#999"
+                    value={newItemPrice}
+                    onChangeText={setNewItemPrice}
+                    keyboardType="numeric"
+                  />
+
                   {/* Category Selection */}
                   <View style={styles.categorySelector}>
                     <ThemedText style={styles.selectorLabel}>
@@ -826,6 +841,16 @@ export default function InventoryScreen() {
                     value={editItemName}
                     onChangeText={setEditItemName}
                     autoCapitalize="words"
+                  />
+
+                  {/* Step 4: Enter New Price */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter new price (optional)"
+                    placeholderTextColor="#999"
+                    value={editItemPrice}
+                    onChangeText={setEditItemPrice}
+                    keyboardType="numeric"
                   />
 
                   <TouchableOpacity

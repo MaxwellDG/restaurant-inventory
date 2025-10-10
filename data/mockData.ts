@@ -4,6 +4,7 @@ export interface InventoryItem {
   quantity: number;
   category: string;
   unit: string;
+  price?: number;
 }
 
 export const mockInventoryItems: InventoryItem[] = [
