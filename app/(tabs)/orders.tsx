@@ -19,6 +19,7 @@ export default function OrdersScreen() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   const { state: ordersState, addOrder, clearAllOrders } = useOrders();
   const { state: categoryState } = useCategory();
 
@@ -55,7 +56,7 @@ export default function OrdersScreen() {
         createdAt: new Date(),
       };
 
-      addOrder(newOrder);
+      setPendingOrders([...pendingOrders, newOrder]);
       setShowModal(false);
       setSelectedCategory("");
       setSelectedItem("");
@@ -65,12 +66,11 @@ export default function OrdersScreen() {
   };
 
   const handleDeleteOrder = (orderId: string) => {
-    // TODO: Implement delete functionality with context
-    Alert.alert("Delete", "Delete functionality coming soon!");
+    setPendingOrders(pendingOrders.filter((order) => order.id !== orderId));
   };
 
   const handleClearAllOrders = () => {
-    clearAllOrders();
+    setPendingOrders([]);
     setShowClearModal(false);
   };
 
@@ -82,7 +82,7 @@ export default function OrdersScreen() {
             <ThemedText type="title" style={styles.title}>
               New Order
             </ThemedText>
-            {ordersState.orders.length > 0 && (
+            {pendingOrders.length > 0 && (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={() => setShowClearModal(true)}
@@ -105,14 +105,14 @@ export default function OrdersScreen() {
         style={styles.ordersList}
         showsVerticalScrollIndicator={false}
       >
-        {ordersState.orders.length === 0 ? (
+        {pendingOrders.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
               No orders yet. Tap the + button to create your first order.
             </ThemedText>
           </View>
         ) : (
-          ordersState.orders.map((order, index) => (
+          pendingOrders.map((order, index) => (
             <View key={order.id} style={styles.orderCard}>
               <View style={styles.orderHeader}>
                 <View style={styles.orderHeaderLeft}>
@@ -140,20 +140,34 @@ export default function OrdersScreen() {
       </ScrollView>
 
       {/* Submit Button */}
-      {ordersState.orders.length > 0 && (
+      {pendingOrders.length > 0 && (
         <View style={styles.submitContainer}>
           <TouchableOpacity
             style={styles.submitButton}
             onPress={() => {
+              // Create one single order with all items
+              const allItems: OrderItem[] = [];
+              pendingOrders.forEach((order) => {
+                allItems.push(...order.items);
+              });
+
+              const singleOrder: Order = {
+                id: `order-${Date.now()}`,
+                items: allItems,
+                user: "Current User", // TODO: Get actual user from auth
+                createdAt: new Date(),
+              };
+
+              addOrder(singleOrder);
               Alert.alert(
-                "Orders Submitted",
-                `Submitted ${ordersState.orders.length} order(s) successfully!`
+                "Order Submitted",
+                `Submitted 1 order with ${allItems.length} item(s) successfully!`
               );
-              clearAllOrders(); // Clear orders after submission
+              setPendingOrders([]); // Clear pending orders after submission
             }}
           >
             <ThemedText style={styles.submitButtonText}>
-              Submit ({ordersState.orders.length})
+              Submit ({pendingOrders.length})
             </ThemedText>
           </TouchableOpacity>
         </View>
@@ -286,7 +300,7 @@ export default function OrdersScreen() {
               Clear All Orders
             </ThemedText>
             <ThemedText style={styles.clearModalMessage}>
-              Are you sure you want to remove all {ordersState.orders.length}{" "}
+              Are you sure you want to remove all {pendingOrders.length}{" "}
               order(s) from the list? This action cannot be undone.
             </ThemedText>
             <View style={styles.clearModalButtons}>

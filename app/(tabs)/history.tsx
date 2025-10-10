@@ -183,12 +183,17 @@ export default function HistoryScreen() {
                       order.items.map((item, itemIndex) => (
                         <ThemedText key={item.id} style={styles.orderText}>
                           {item.name} ({item.quantity} {item.unit}) -{" "}
-                          {item.category}
+                          <ThemedText style={styles.categoryText}>
+                            {item.category}
+                          </ThemedText>
                         </ThemedText>
                       ))
                     ) : (
                       <ThemedText style={styles.orderText}>
-                        {(order as any).item} from {(order as any).category}
+                        {(order as any).item} from{" "}
+                        <ThemedText style={styles.categoryText}>
+                          {(order as any).category}
+                        </ThemedText>
                       </ThemedText>
                     )}
                     <ThemedText style={styles.orderUser}>
@@ -337,6 +342,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
     flex: 1,
+  },
+  categoryText: {
+    color: "#999",
   },
   orderUser: {
     fontSize: 14,
