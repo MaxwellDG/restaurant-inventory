@@ -179,9 +179,18 @@ export default function HistoryScreen() {
                 </View>
                 {isExpanded && (
                   <View style={styles.expandedContent}>
-                    <ThemedText style={styles.orderText}>
-                      {order.item} from {order.category}
-                    </ThemedText>
+                    {order.items && Array.isArray(order.items) ? (
+                      order.items.map((item, itemIndex) => (
+                        <ThemedText key={item.id} style={styles.orderText}>
+                          {item.name} ({item.quantity} {item.unit}) -{" "}
+                          {item.category}
+                        </ThemedText>
+                      ))
+                    ) : (
+                      <ThemedText style={styles.orderText}>
+                        {(order as any).item} from {(order as any).category}
+                      </ThemedText>
+                    )}
                     <ThemedText style={styles.orderUser}>
                       Created by: {order.user}
                     </ThemedText>

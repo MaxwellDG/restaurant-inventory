@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCategory } from "@/context/CategoryContext";
-import { useOrders } from "@/context/OrdersContext";
+import { Order, OrderItem, useOrders } from "@/context/OrdersContext";
 import { mockInventoryItems } from "@/data/mockData";
 import React, { useState } from "react";
 import {
@@ -13,13 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-interface Order {
-  id: string;
-  item: string;
-  category: string;
-  createdAt: Date;
-}
 
 export default function OrdersScreen() {
   const [showModal, setShowModal] = useState(false);
@@ -41,10 +34,24 @@ export default function OrdersScreen() {
 
   const handleCreateOrder = () => {
     if (selectedCategory && selectedItem) {
+      // Find the selected item from mock data to get quantity and unit
+      const selectedInventoryItem = mockInventoryItems.find(
+        (item) =>
+          item.name === selectedItem && item.category === selectedCategory
+      );
+
+      const newOrderItem: OrderItem = {
+        id: `item-${Date.now()}`,
+        name: selectedItem,
+        category: selectedCategory,
+        quantity: selectedInventoryItem?.quantity || 1,
+        unit: selectedInventoryItem?.unit || "unit",
+      };
+
       const newOrder: Order = {
         id: `order-${Date.now()}`,
-        item: selectedItem,
-        category: selectedCategory,
+        items: [newOrderItem],
+        user: "Current User", // TODO: Get actual user from auth
         createdAt: new Date(),
       };
 
@@ -113,7 +120,7 @@ export default function OrdersScreen() {
                     {index + 1}.
                   </ThemedText>
                   <ThemedText style={styles.orderText}>
-                    {order.item} from {order.category}
+                    {order.items.map((item) => item.name).join(", ")}
                   </ThemedText>
                 </View>
                 <TouchableOpacity

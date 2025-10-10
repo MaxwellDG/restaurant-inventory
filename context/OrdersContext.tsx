@@ -1,9 +1,16 @@
 import React, { createContext, ReactNode, useContext, useReducer } from "react";
 
+export interface OrderItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+}
+
 export interface Order {
   id: string;
-  item: string;
-  category: string;
+  items: OrderItem[];
   user: string;
   createdAt: Date;
 }
@@ -22,36 +29,99 @@ const initialState: OrdersState = {
   orders: [
     {
       id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      item: "Chicken Breast",
-      category: "Proteins",
+      items: [
+        {
+          id: "item1",
+          name: "Chicken Breast",
+          category: "Proteins",
+          quantity: 5,
+          unit: "lbs",
+        },
+        {
+          id: "item2",
+          name: "Rice",
+          category: "Grains",
+          quantity: 10,
+          unit: "lbs",
+        },
+      ],
       user: "John Smith",
       createdAt: new Date("2025-10-07T10:30:00"),
     },
     {
       id: "b2c3d4e5-f6g7-8901-bcde-f23456789012",
-      item: "Tomatoes",
-      category: "Vegetables",
+      items: [
+        {
+          id: "item3",
+          name: "Tomatoes",
+          category: "Vegetables",
+          quantity: 8,
+          unit: "lbs",
+        },
+      ],
       user: "Sarah Johnson",
       createdAt: new Date("2025-10-05T09:15:00"),
     },
     {
       id: "c3d4e5f6-g7h8-9012-cdef-345678901234",
-      item: "Olive Oil",
-      category: "Pantry",
+      items: [
+        {
+          id: "item4",
+          name: "Olive Oil",
+          category: "Pantry",
+          quantity: 2,
+          unit: "bottles",
+        },
+        {
+          id: "item5",
+          name: "Pasta",
+          category: "Grains",
+          quantity: 3,
+          unit: "lbs",
+        },
+        {
+          id: "item6",
+          name: "Cheese",
+          category: "Dairy",
+          quantity: 4,
+          unit: "lbs",
+        },
+      ],
       user: "Mike Wilson",
       createdAt: new Date("2025-10-03T16:45:00"),
     },
     {
       id: "d4e5f6g7-h8i9-0123-def0-456789012345",
-      item: "Salmon Fillet",
-      category: "Proteins",
+      items: [
+        {
+          id: "item7",
+          name: "Salmon Fillet",
+          category: "Proteins",
+          quantity: 3,
+          unit: "lbs",
+        },
+      ],
       user: "Emily Davis",
       createdAt: new Date("2025-09-25T14:20:00"),
     },
     {
       id: "e5f6g7h8-i9j0-1234-ef01-567890123456",
-      item: "Ground Beef",
-      category: "Proteins",
+      items: [
+        {
+          id: "item8",
+          name: "Ground Beef",
+          category: "Proteins",
+          quantity: 6,
+          unit: "lbs",
+        },
+        {
+          id: "item9",
+          name: "Onions",
+          category: "Vegetables",
+          quantity: 5,
+          unit: "lbs",
+        },
+      ],
       user: "John Smith",
       createdAt: new Date("2025-09-20T11:00:00"),
     },
