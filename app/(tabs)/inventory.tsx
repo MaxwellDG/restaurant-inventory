@@ -2,7 +2,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCategory } from "@/context/CategoryContext";
-import { InventoryItem, mockInventoryItems } from "@/data/mockData";
+import { useInventory } from "@/context/InventoryContext";
+import { InventoryItem } from "@/data/mockData";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -18,8 +19,15 @@ import {
 
 export default function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
-  const [inventoryItems, setInventoryItems] =
-    useState<InventoryItem[]>(mockInventoryItems);
+  const {
+    state: inventoryState,
+    addItem,
+    updateItem,
+    deleteItem,
+    adjustQuantity,
+    getItemsByCategory,
+    findItem,
+  } = useInventory();
   const {
     state: categoryState,
     addCategory,
@@ -73,23 +81,17 @@ export default function InventoryScreen() {
 
   // Get items for the selected edit category
   const editCategoryItems = selectedEditItemCategory
-    ? inventoryItems.filter(
-        (item) => item.category === selectedEditItemCategory
-      )
+    ? getItemsByCategory(selectedEditItemCategory)
     : [];
 
   // Get items for the selected manual entry category
   const manualCategoryItems = selectedManualCategory
-    ? inventoryItems.filter((item) => item.category === selectedManualCategory)
+    ? getItemsByCategory(selectedManualCategory)
     : [];
 
   // Get the selected item's quantity for the slider
   const selectedItemQuantity = selectedManualItem
-    ? inventoryItems.find(
-        (item) =>
-          item.name === selectedManualItem &&
-          item.category === selectedManualCategory
-      )?.quantity || 0
+    ? findItem(selectedManualItem, selectedManualCategory)?.quantity || 0
     : 0;
 
   // Adjust quantity when switching to selling mode or when item changes
@@ -116,9 +118,7 @@ export default function InventoryScreen() {
 
   // First establish categories from context, then populate with items
   const groupedItems = categoryState.categories.reduce((acc, category) => {
-    acc[category.name] = inventoryItems.filter(
-      (item) => item.category === category.name
-    );
+    acc[category.name] = getItemsByCategory(category.name);
     return acc;
   }, {} as { [key: string]: InventoryItem[] });
 
@@ -174,7 +174,7 @@ export default function InventoryScreen() {
         price: newItemPrice.trim() ? parseFloat(newItemPrice) : undefined,
       };
 
-      setInventoryItems((prev) => [...prev, newItem]);
+      addItem(newItem);
 
       // Reset form
       setNewItemName("");
@@ -278,9 +278,7 @@ export default function InventoryScreen() {
           price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
         };
 
-        setInventoryItems((prev) =>
-          prev.map((item) => (item.id === itemToEdit.id ? updatedItem : item))
-        );
+        updateItem(updatedItem);
         Alert.alert(
           "Success",
           `Item "${selectedEditItem}" updated successfully!`
@@ -302,13 +300,11 @@ export default function InventoryScreen() {
   const handleDeleteItem = () => {
     if (deleteItemName.trim()) {
       // Find item by exact name match
-      const itemToDelete = inventoryItems.find(
+      const itemToDelete = inventoryState.items.find(
         (item) => item.name === deleteItemName.trim()
       );
       if (itemToDelete) {
-        setInventoryItems((prev) =>
-          prev.filter((item) => item.name !== deleteItemName.trim())
-        );
+        deleteItem(deleteItemName.trim());
         Alert.alert(
           "Success",
           `Item "${deleteItemName.trim()}" deleted successfully!`
@@ -328,6 +324,54 @@ export default function InventoryScreen() {
 
   const handleManualEntrySubmit = () => {
     if (selectedManualCategory && selectedManualItem) {
+      const existingItem = findItem(selectedManualItem, selectedManualCategory);
+
+      if (isBuying) {
+        // When buying, add to inventory
+        const buyQuantity = quantityToSell || 1; // Use quantityToSell for buying too
+        if (existingItem) {
+          // Item exists, update quantity
+          adjustQuantity(existingItem.id, buyQuantity);
+        } else {
+          // Item doesn't exist, create new item
+          const newItem: InventoryItem = {
+            id: `item-${Date.now()}`,
+            name: selectedManualItem,
+            category: selectedManualCategory,
+            quantity: buyQuantity,
+            unit: "unit", // Default unit, can be customized later
+          };
+          addItem(newItem);
+        }
+      } else {
+        // When selling, remove from inventory
+        if (existingItem) {
+          const sellQuantity = quantityToSell || 1;
+
+          if (existingItem.quantity >= sellQuantity) {
+            if (existingItem.quantity === sellQuantity) {
+              // Remove item completely if selling all
+              deleteItem(existingItem.name);
+            } else {
+              // Reduce quantity
+              adjustQuantity(existingItem.id, -sellQuantity);
+            }
+          } else {
+            Alert.alert(
+              "Error",
+              `Cannot sell ${sellQuantity} items. Only ${existingItem.quantity} available in inventory.`
+            );
+            return;
+          }
+        } else {
+          Alert.alert(
+            "Error",
+            "Item not found in inventory. Cannot sell items that don't exist."
+          );
+          return;
+        }
+      }
+
       const action = isBuying ? "buying" : "selling";
       const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
       Alert.alert(
@@ -1201,6 +1245,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FA",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E7",
+    marginBottom: 8,
   },
   sectionHeaderText: {
     fontSize: 18,

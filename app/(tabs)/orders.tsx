@@ -2,12 +2,14 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCategory } from "@/context/CategoryContext";
+import { useInventory } from "@/context/InventoryContext";
 import { Order, OrderItem, useOrders } from "@/context/OrdersContext";
-import { mockInventoryItems } from "@/data/mockData";
 import React, { useState } from "react";
 import {
   Alert,
+  Animated,
   Modal,
+  PanResponder,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -19,34 +21,62 @@ export default function OrdersScreen() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
+  const [orderQuantity, setOrderQuantity] = useState(1);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   const { state: ordersState, addOrder, clearAllOrders } = useOrders();
   const { state: categoryState } = useCategory();
+  const { getItemsByCategory, findItem } = useInventory();
 
-  // Get items for the selected category
+  // Get items for the selected category, filtering out items already in pending orders
   const categoryItems = selectedCategory
-    ? mockInventoryItems.filter((item) => item.category === selectedCategory)
+    ? getItemsByCategory(selectedCategory).filter((item) => {
+        // Check if this item is already in any pending order
+        return !pendingOrders.some((order) =>
+          order.items.some(
+            (orderItem) =>
+              orderItem.name === item.name &&
+              orderItem.category === item.category
+          )
+        );
+      })
     : [];
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedItem(""); // Clear item when category changes
+    setOrderQuantity(1); // Reset quantity when category changes
+  };
+
+  const handleItemChange = (item: string) => {
+    setSelectedItem(item);
+    setOrderQuantity(1); // Reset quantity when item changes
   };
 
   const handleCreateOrder = () => {
     if (selectedCategory && selectedItem) {
-      // Find the selected item from mock data to get quantity and unit
-      const selectedInventoryItem = mockInventoryItems.find(
-        (item) =>
-          item.name === selectedItem && item.category === selectedCategory
-      );
+      // Find the selected item from inventory data to get quantity and unit
+      const selectedInventoryItem = findItem(selectedItem, selectedCategory);
+
+      if (!selectedInventoryItem) {
+        Alert.alert("Error", "Selected item not found in inventory");
+        return;
+      }
+
+      // Validate quantity doesn't exceed inventory
+      if (orderQuantity > selectedInventoryItem.quantity) {
+        Alert.alert(
+          "Error",
+          `Cannot order ${orderQuantity} items. Only ${selectedInventoryItem.quantity} available in inventory.`
+        );
+        return;
+      }
 
       const newOrderItem: OrderItem = {
         id: `item-${Date.now()}`,
         name: selectedItem,
         category: selectedCategory,
-        quantity: selectedInventoryItem?.quantity || 1,
-        unit: selectedInventoryItem?.unit || "unit",
+        quantity: orderQuantity,
+        unit: selectedInventoryItem.unit,
       };
 
       const newOrder: Order = {
@@ -60,6 +90,7 @@ export default function OrdersScreen() {
       setShowModal(false);
       setSelectedCategory("");
       setSelectedItem("");
+      setOrderQuantity(1);
     } else {
       Alert.alert("Error", "Please select both category and item");
     }
@@ -72,6 +103,146 @@ export default function OrdersScreen() {
   const handleClearAllOrders = () => {
     setPendingOrders([]);
     setShowClearModal(false);
+  };
+
+  const handleIncreaseQuantity = (orderId: string, itemId: string) => {
+    setPendingOrders((prevOrders) =>
+      prevOrders.map((order) => {
+        if (order.id === orderId) {
+          return {
+            ...order,
+            items: order.items.map((item) => {
+              if (item.id === itemId) {
+                // Find the inventory item to check max quantity
+                const inventoryItem = findItem(item.name, item.category);
+                const maxQuantity = inventoryItem?.quantity || 0;
+                const newQuantity = Math.min(maxQuantity, item.quantity + 1);
+
+                if (newQuantity > item.quantity) {
+                  return { ...item, quantity: newQuantity };
+                }
+              }
+              return item;
+            }),
+          };
+        }
+        return order;
+      })
+    );
+  };
+
+  const handleDecreaseQuantity = (orderId: string, itemId: string) => {
+    setPendingOrders((prevOrders) =>
+      prevOrders.map((order) => {
+        if (order.id === orderId) {
+          return {
+            ...order,
+            items: order.items
+              .map((item) => {
+                if (item.id === itemId) {
+                  const newQuantity = Math.max(1, item.quantity - 1);
+                  return { ...item, quantity: newQuantity };
+                }
+                return item;
+              })
+              .filter((item) => item.quantity > 0), // Remove items with 0 quantity
+          };
+        }
+        return order;
+      })
+    );
+  };
+
+  const SwipeableOrderCard = ({
+    order,
+    index,
+  }: {
+    order: Order;
+    index: number;
+  }) => {
+    const translateX = new Animated.Value(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isSwiping, setIsSwiping] = useState(false);
+
+    const panResponder = PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return (
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) &&
+          Math.abs(gestureState.dx) > 10
+        );
+      },
+      onPanResponderGrant: () => {
+        setIsSwiping(true);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        setIsSwiping(false);
+        if (gestureState.dx < -100) {
+          // Swipe left far enough to trigger delete
+          setIsDeleting(true);
+          Animated.timing(translateX, {
+            toValue: -400,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            handleDeleteOrder(order.id);
+          });
+        } else {
+          // Snap back to original position
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.orderCard,
+          {
+            transform: [{ translateX }],
+            opacity: isDeleting ? 0.5 : 1,
+            backgroundColor: isSwiping ? "#FFE6E6" : "white",
+          },
+        ]}
+        {...panResponder.panHandlers}
+      >
+        {order.items.map((item, itemIndex) => (
+          <View key={`${order.id}-${item.id}`} style={styles.orderItemRow}>
+            <View style={styles.orderItemTop}>
+              <ThemedText style={styles.orderItemName}>{item.name}</ThemedText>
+              <View style={styles.orderQuantityControls}>
+                <TouchableOpacity
+                  style={styles.orderQuantityButton}
+                  onPress={() => handleDecreaseQuantity(order.id, item.id)}
+                >
+                  <ThemedText style={styles.orderQuantityButtonText}>
+                    -
+                  </ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.orderQuantityText}>
+                  {item.quantity}
+                </ThemedText>
+                <TouchableOpacity
+                  style={styles.orderQuantityButton}
+                  onPress={() => handleIncreaseQuantity(order.id, item.id)}
+                >
+                  <ThemedText style={styles.orderQuantityButtonText}>
+                    +
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+    );
   };
 
   return (
@@ -113,28 +284,7 @@ export default function OrdersScreen() {
           </View>
         ) : (
           pendingOrders.map((order, index) => (
-            <View key={order.id} style={styles.orderCard}>
-              <View style={styles.orderHeader}>
-                <View style={styles.orderHeaderLeft}>
-                  <ThemedText style={styles.orderNumber}>
-                    {index + 1}.
-                  </ThemedText>
-                  <ThemedText style={styles.orderText}>
-                    {order.items.map((item) => item.name).join(", ")}
-                  </ThemedText>
-                </View>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleDeleteOrder(order.id)}
-                >
-                  <IconSymbol
-                    name="trash"
-                    size={18}
-                    color="rgba(255, 59, 48, 0.4)"
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <SwipeableOrderCard key={order.id} order={order} index={index} />
           ))
         )}
       </ScrollView>
@@ -237,7 +387,7 @@ export default function OrdersScreen() {
                         styles.itemOption,
                         selectedItem === item.name && styles.itemOptionSelected,
                       ]}
-                      onPress={() => setSelectedItem(item.name)}
+                      onPress={() => handleItemChange(item.name)}
                       disabled={!selectedCategory}
                     >
                       <ThemedText
@@ -257,8 +407,63 @@ export default function OrdersScreen() {
                       Please select a category first
                     </ThemedText>
                   )}
+                  {selectedCategory && categoryItems.length === 0 && (
+                    <ThemedText style={styles.disabledText}>
+                      All items in this category have already been added to the
+                      order
+                    </ThemedText>
+                  )}
                 </ScrollView>
               </View>
+
+              {/* Quantity Selection */}
+              {selectedItem && (
+                <View style={styles.section}>
+                  <ThemedText style={styles.sectionTitle}>
+                    Select Quantity
+                  </ThemedText>
+                  <View style={styles.quantityContainer}>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() =>
+                        setOrderQuantity(Math.max(1, orderQuantity - 1))
+                      }
+                    >
+                      <ThemedText style={styles.quantityButtonText}>
+                        -
+                      </ThemedText>
+                    </TouchableOpacity>
+                    <View style={styles.quantityDisplay}>
+                      <ThemedText style={styles.quantityText}>
+                        {orderQuantity}
+                      </ThemedText>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => {
+                        const selectedInventoryItem = findItem(
+                          selectedItem,
+                          selectedCategory
+                        );
+                        const maxQuantity =
+                          selectedInventoryItem?.quantity || 0;
+                        setOrderQuantity(
+                          Math.min(maxQuantity, orderQuantity + 1)
+                        );
+                      }}
+                    >
+                      <ThemedText style={styles.quantityButtonText}>
+                        +
+                      </ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                  <ThemedText style={styles.quantityInfo}>
+                    Available:{" "}
+                    {findItem(selectedItem, selectedCategory)?.quantity || 0}{" "}
+                    {findItem(selectedItem, selectedCategory)?.unit || "units"}
+                  </ThemedText>
+                </View>
+              )}
             </ScrollView>
 
             {/* Modal Footer */}
@@ -413,9 +618,9 @@ const styles = StyleSheet.create({
   orderCard: {
     backgroundColor: "white",
     borderRadius: 12,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#E5E5E7",
     shadowColor: "#000",
@@ -452,6 +657,52 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlignVertical: "center",
     lineHeight: 24,
+  },
+  orderItemRow: {
+    padding: 8,
+  },
+  orderItemTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  orderItemName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    flex: 1,
+    marginBottom: 0,
+  },
+  orderQuantityControls: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  orderQuantityButton: {
+    backgroundColor: "#007AFF",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  orderQuantityButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  orderQuantityText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginHorizontal: 12,
+    minWidth: 20,
+    textAlign: "center",
+    marginBottom: 0,
   },
   deleteButton: {
     padding: 8,
@@ -686,5 +937,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "white",
+  },
+  // Quantity selector styles
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 12,
+  },
+  quantityButton: {
+    backgroundColor: "#007AFF",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quantityButtonText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+  },
+  quantityDisplay: {
+    backgroundColor: "#F8F9FA",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E5E7",
+    minWidth: 60,
+    alignItems: "center",
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  quantityInfo: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
   },
 });

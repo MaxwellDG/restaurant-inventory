@@ -9,12 +9,7 @@ import {
   View,
 } from "react-native";
 
-const dummyMembers = [
-  { id: 1, name: "John Smith", role: "admin" },
-  { id: 2, name: "Sarah Johnson", role: "user" },
-  { id: 3, name: "Mike Wilson", role: "user" },
-  { id: 4, name: "Emily Davis", role: "user" },
-];
+const dummyMembers: any[] = [];
 
 export default function SettingsScreen() {
   const [isMembersExpanded, setIsMembersExpanded] = useState(false);

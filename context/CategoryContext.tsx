@@ -23,13 +23,7 @@ type CategoryAction =
 
 // Initial state
 const initialState: CategoryState = {
-  categories: [
-    { id: "1", name: "Drinks", createdAt: new Date() },
-    { id: "2", name: "Food", createdAt: new Date() },
-    { id: "3", name: "Extras", createdAt: new Date() },
-    { id: "4", name: "Alcohol", createdAt: new Date() },
-    { id: "5", name: "Cleaning", createdAt: new Date() },
-  ],
+  categories: [],
   loading: false,
   error: null,
 };
