@@ -1,10 +1,12 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import { productsApi } from './products/apiSlice';
+import { ordersApi } from './orders/apiSlice';
 
 const appReducer = combineReducers({
   auth: authReducer,
-  products: productsApi.reducer
+  products: productsApi.reducer,
+  orders: ordersApi.reducer,
 });
 
 const persistConfig = {
