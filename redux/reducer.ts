@@ -2,6 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import { productsApi } from './products/apiSlice';
 import { ordersApi } from './orders/apiSlice';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { exportApi } from './export/apiSlice';
 
 const appReducer = combineReducers({
@@ -12,7 +13,8 @@ const appReducer = combineReducers({
 });
 
 const persistConfig = {
-  key: 'root'
+  key: 'root',
+  storage: AsyncStorage
 };
 
 const reducerWithReset = (state: any, action: any) => {

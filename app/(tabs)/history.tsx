@@ -2,7 +2,9 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useOrders } from "@/context/OrdersContext";
+import { ORDER_STATUS } from "@/redux/orders/types";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
 import {
   Platform,
@@ -20,10 +22,17 @@ export default function HistoryScreen() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [selectedStatus, setSelectedStatus] =
+    useState<keyof typeof ORDER_STATUS>("OPEN");
 
-  // Filter orders based on selected date range
+  // Filter orders based on selected date range and status
   const filteredOrders = orders.filter((order) => {
-    // Get order date as timestamp (start of day)
+    // Status filtering
+    // Note: The current Order interface doesn't have a status field,
+    // so we'll need to add this when the backend integration is complete
+    // For now, we'll skip status filtering
+
+    // Date filtering
     const orderDate = new Date(order.createdAt);
     const orderDateStartOfDay = new Date(
       orderDate.getFullYear(),
@@ -127,6 +136,19 @@ export default function HistoryScreen() {
                 <ThemedText style={styles.clearButtonText}>Clear</ThemedText>
               </TouchableOpacity>
             )}
+          </View>
+        </View>
+        <View style={styles.filterRow}>
+          <View style={styles.statusFilterContainer}>
+            <Picker
+              selectedValue={selectedStatus}
+              onValueChange={(value) => setSelectedStatus(value)}
+              style={styles.statusPicker}
+            >
+              <Picker.Item label="Completed" value="COMPLETED" />
+              <Picker.Item label="Pending Payment" value="PENDING_PAYMENT" />
+              <Picker.Item label="Open" value="OPEN" />
+            </Picker>
           </View>
           <View style={styles.dateFilterContainer}>
             <TouchableOpacity
@@ -247,6 +269,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+  },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -255,6 +283,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
+  },
+  statusFilterContainer: {
+    flex: 1,
+    marginRight: 16,
+    padding: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingVertical: 0
+  },
+  statusPicker: {
+    height: 60,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 8,
+    paddingHorizontal: 8,
   },
   dateFilterContainer: {
     flexDirection: "row",
