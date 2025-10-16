@@ -1,8 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useExportDataMutation } from "@/redux/export/apiSlice";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -20,6 +20,7 @@ export default function ExportDataScreen() {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [email, setEmail] = useState("");
+  const [exportData, { isLoading }] = useExportDataMutation();
 
   const handleStartDatePress = () => {
     setShowStartDatePicker(true);
@@ -43,7 +44,7 @@ export default function ExportDataScreen() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!startDate || !endDate) {
       Alert.alert("Error", "Please select both start and end dates");
       return;
@@ -52,13 +53,27 @@ export default function ExportDataScreen() {
       Alert.alert("Error", "Please enter your email address");
       return;
     }
-    Alert.alert("Success", "Export request submitted successfully!");
+    await exportData({
+      email: email.trim(),
+      type: "csv",
+      startDate: startDate.getTime(),
+      endDate: endDate.getTime(),
+    })
+      .unwrap()
+      .then(() => {
+        Alert.alert("Success", "Export request submitted successfully!");
+      })
+      .catch((error) => {
+        Alert.alert(
+          "Error",
+          "Failed to submit export request. Please try again."
+        );
+      });
   };
 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
- 
         <ThemedText type="title" style={styles.title}>
           Export Data
         </ThemedText>
@@ -113,7 +128,11 @@ export default function ExportDataScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          disabled={isLoading}
+        >
           <ThemedText style={styles.submitButtonText}>Submit</ThemedText>
         </TouchableOpacity>
       </ScrollView>
