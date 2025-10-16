@@ -2,10 +2,11 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCategory } from "@/context/CategoryContext";
-import { useInventory } from "@/context/InventoryContext";
 import { Order, OrderItem, useOrders } from "@/context/OrdersContext";
+import { useGetInventoryQuery } from "@/redux/products/apiSlice";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Modal,
@@ -25,7 +26,22 @@ export default function OrdersScreen() {
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   const { state: ordersState, addOrder, clearAllOrders } = useOrders();
   const { state: categoryState } = useCategory();
-  const { getItemsByCategory, findItem } = useInventory();
+  const { data: inventoryData, isLoading: inventoryLoading } =
+    useGetInventoryQuery();
+
+  // Helper functions to work with inventory data
+  const getItemsByCategory = (categoryName: string) => {
+    if (!inventoryData) return [];
+    const category = inventoryData.find((cat) => cat.name === categoryName);
+    return category ? category.items : [];
+  };
+
+  const findItem = (itemName: string, categoryName: string) => {
+    if (!inventoryData) return null;
+    const category = inventoryData.find((cat) => cat.name === categoryName);
+    if (!category) return null;
+    return category.items.find((item) => item.name === itemName) || null;
+  };
 
   // Get items for the selected category, filtering out items already in pending orders
   const categoryItems = selectedCategory
@@ -35,7 +51,7 @@ export default function OrdersScreen() {
           order.items.some(
             (orderItem) =>
               orderItem.name === item.name &&
-              orderItem.category === item.category
+              orderItem.category === selectedCategory
           )
         );
       })
@@ -76,7 +92,7 @@ export default function OrdersScreen() {
         name: selectedItem,
         category: selectedCategory,
         quantity: orderQuantity,
-        unit: selectedInventoryItem.unit,
+        unit: selectedInventoryItem.typeOfUnit,
       };
 
       const newOrder: Order = {
@@ -338,133 +354,146 @@ export default function OrdersScreen() {
               </ThemedText>
             </View>
 
-            <ScrollView style={styles.modalBody}>
-              {/* Category Selection */}
-              <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>
-                  Select Category
+            {inventoryLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <ThemedText style={styles.loadingText}>
+                  Loading inventory...
                 </ThemedText>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.categoryScroll}
-                >
-                  {categoryState.categories.map((category) => (
-                    <TouchableOpacity
-                      key={category.id}
-                      style={[
-                        styles.categoryOption,
-                        selectedCategory === category.name &&
-                          styles.categoryOptionSelected,
-                      ]}
-                      onPress={() => handleCategoryChange(category.name)}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.categoryOptionText,
-                          selectedCategory === category.name &&
-                            styles.categoryOptionTextSelected,
-                        ]}
-                      >
-                        {category.name}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
               </View>
-
-              {/* Item Selection */}
-              <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>Select Item</ThemedText>
-                <ScrollView
-                  style={styles.itemScroll}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {categoryItems.map((item) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[
-                        styles.itemOption,
-                        selectedItem === item.name && styles.itemOptionSelected,
-                      ]}
-                      onPress={() => handleItemChange(item.name)}
-                      disabled={!selectedCategory}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.itemOptionText,
-                          selectedItem === item.name &&
-                            styles.itemOptionTextSelected,
-                          !selectedCategory && styles.itemOptionDisabled,
-                        ]}
-                      >
-                        {item.name} ({item.quantity} {item.unit})
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                  {!selectedCategory && (
-                    <ThemedText style={styles.disabledText}>
-                      Please select a category first
-                    </ThemedText>
-                  )}
-                  {selectedCategory && categoryItems.length === 0 && (
-                    <ThemedText style={styles.disabledText}>
-                      All items in this category have already been added to the
-                      order
-                    </ThemedText>
-                  )}
-                </ScrollView>
-              </View>
-
-              {/* Quantity Selection */}
-              {selectedItem && (
+            ) : (
+              <ScrollView style={styles.modalBody}>
+                {/* Category Selection */}
                 <View style={styles.section}>
                   <ThemedText style={styles.sectionTitle}>
-                    Select Quantity
+                    Select Category
                   </ThemedText>
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() =>
-                        setOrderQuantity(Math.max(1, orderQuantity - 1))
-                      }
-                    >
-                      <ThemedText style={styles.quantityButtonText}>
-                        -
-                      </ThemedText>
-                    </TouchableOpacity>
-                    <View style={styles.quantityDisplay}>
-                      <ThemedText style={styles.quantityText}>
-                        {orderQuantity}
-                      </ThemedText>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => {
-                        const selectedInventoryItem = findItem(
-                          selectedItem,
-                          selectedCategory
-                        );
-                        const maxQuantity =
-                          selectedInventoryItem?.quantity || 0;
-                        setOrderQuantity(
-                          Math.min(maxQuantity, orderQuantity + 1)
-                        );
-                      }}
-                    >
-                      <ThemedText style={styles.quantityButtonText}>
-                        +
-                      </ThemedText>
-                    </TouchableOpacity>
-                  </View>
-                  <ThemedText style={styles.quantityInfo}>
-                    Available:{" "}
-                    {findItem(selectedItem, selectedCategory)?.quantity || 0}{" "}
-                    {findItem(selectedItem, selectedCategory)?.unit || "units"}
-                  </ThemedText>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoryScroll}
+                  >
+                    {categoryState.categories.map((category) => (
+                      <TouchableOpacity
+                        key={category.id}
+                        style={[
+                          styles.categoryOption,
+                          selectedCategory === category.name &&
+                            styles.categoryOptionSelected,
+                        ]}
+                        onPress={() => handleCategoryChange(category.name)}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.categoryOptionText,
+                            selectedCategory === category.name &&
+                              styles.categoryOptionTextSelected,
+                          ]}
+                        >
+                          {category.name}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
-              )}
-            </ScrollView>
+
+                {/* Item Selection */}
+                <View style={styles.section}>
+                  <ThemedText style={styles.sectionTitle}>
+                    Select Item
+                  </ThemedText>
+                  <ScrollView
+                    style={styles.itemScroll}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {categoryItems.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[
+                          styles.itemOption,
+                          selectedItem === item.name &&
+                            styles.itemOptionSelected,
+                        ]}
+                        onPress={() => handleItemChange(item.name)}
+                        disabled={!selectedCategory}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.itemOptionText,
+                            selectedItem === item.name &&
+                              styles.itemOptionTextSelected,
+                            !selectedCategory && styles.itemOptionDisabled,
+                          ]}
+                        >
+                          {item.name} ({item.quantity} {item.typeOfUnit})
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                    {!selectedCategory && (
+                      <ThemedText style={styles.disabledText}>
+                        Please select a category first
+                      </ThemedText>
+                    )}
+                    {selectedCategory && categoryItems.length === 0 && (
+                      <ThemedText style={styles.disabledText}>
+                        All items in this category have already been added to
+                        the order
+                      </ThemedText>
+                    )}
+                  </ScrollView>
+                </View>
+
+                {/* Quantity Selection */}
+                {selectedItem && (
+                  <View style={styles.section}>
+                    <ThemedText style={styles.sectionTitle}>
+                      Select Quantity
+                    </ThemedText>
+                    <View style={styles.quantityContainer}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() =>
+                          setOrderQuantity(Math.max(1, orderQuantity - 1))
+                        }
+                      >
+                        <ThemedText style={styles.quantityButtonText}>
+                          -
+                        </ThemedText>
+                      </TouchableOpacity>
+                      <View style={styles.quantityDisplay}>
+                        <ThemedText style={styles.quantityText}>
+                          {orderQuantity}
+                        </ThemedText>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => {
+                          const selectedInventoryItem = findItem(
+                            selectedItem,
+                            selectedCategory
+                          );
+                          const maxQuantity =
+                            selectedInventoryItem?.quantity || 0;
+                          setOrderQuantity(
+                            Math.min(maxQuantity, orderQuantity + 1)
+                          );
+                        }}
+                      >
+                        <ThemedText style={styles.quantityButtonText}>
+                          +
+                        </ThemedText>
+                      </TouchableOpacity>
+                    </View>
+                    <ThemedText style={styles.quantityInfo}>
+                      Available:{" "}
+                      {findItem(selectedItem, selectedCategory)?.quantity || 0}{" "}
+                      {findItem(selectedItem, selectedCategory)?.typeOfUnit ||
+                        "units"}
+                    </ThemedText>
+                  </View>
+                )}
+              </ScrollView>
+            )}
 
             {/* Modal Footer */}
             <View style={styles.modalFooter}>
@@ -984,5 +1013,18 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 8,
+  },
+  // Loading styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 16,
+    textAlign: "center",
   },
 });
