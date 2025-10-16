@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useOrders } from "@/context/OrdersContext";
+import { useGetOrdersQuery } from "@/redux/orders/apiSlice";
 import { ORDER_STATUS } from "@/redux/orders/types";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
@@ -15,8 +15,6 @@ import {
 } from "react-native";
 
 export default function HistoryScreen() {
-  const { state } = useOrders();
-  const { orders } = state;
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -24,61 +22,15 @@ export default function HistoryScreen() {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedStatus, setSelectedStatus] =
     useState<keyof typeof ORDER_STATUS>("OPEN");
+  const [pageNumber, setPageNumber] = useState(1);
 
-  // Filter orders based on selected date range and status
-  const filteredOrders = orders.filter((order) => {
-    // Status filtering
-    // Note: The current Order interface doesn't have a status field,
-    // so we'll need to add this when the backend integration is complete
-    // For now, we'll skip status filtering
-
-    // Date filtering
-    const orderDate = new Date(order.createdAt);
-    const orderDateStartOfDay = new Date(
-      orderDate.getFullYear(),
-      orderDate.getMonth(),
-      orderDate.getDate()
-    );
-    const orderTimestamp = orderDateStartOfDay.getTime();
-
-    if (startDate && endDate) {
-      // Get start and end dates as timestamps (start of day)
-      const startDateStartOfDay = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        startDate.getDate()
-      );
-      const endDateStartOfDay = new Date(
-        endDate.getFullYear(),
-        endDate.getMonth(),
-        endDate.getDate()
-      );
-
-      const startTimestamp = startDateStartOfDay.getTime();
-      const endTimestamp = endDateStartOfDay.getTime();
-
-      return orderTimestamp >= startTimestamp && orderTimestamp <= endTimestamp;
-    } else if (startDate) {
-      const startDateStartOfDay = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        startDate.getDate()
-      );
-      const startTimestamp = startDateStartOfDay.getTime();
-
-      return orderTimestamp >= startTimestamp;
-    } else if (endDate) {
-      const endDateStartOfDay = new Date(
-        endDate.getFullYear(),
-        endDate.getMonth(),
-        endDate.getDate()
-      );
-      const endTimestamp = endDateStartOfDay.getTime();
-
-      return orderTimestamp <= endTimestamp;
-    }
-
-    return true; // Show all orders if no dates are selected
+  const {
+    data: orders = [],
+    isLoading,
+    error,
+  } = useGetOrdersQuery({
+    limit: 10,
+    page: pageNumber,
   });
 
   const toggleExpanded = (orderId: string) => {
@@ -172,7 +124,19 @@ export default function HistoryScreen() {
         style={styles.ordersList}
         showsVerticalScrollIndicator={false}
       >
-        {filteredOrders.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateText}>
+              Loading orders...
+            </ThemedText>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateText}>
+              Error loading orders. Please try again.
+            </ThemedText>
+          </View>
+        ) : orders.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
               {orders.length === 0
@@ -181,17 +145,17 @@ export default function HistoryScreen() {
             </ThemedText>
           </View>
         ) : (
-          filteredOrders.map((order, index) => {
-            const isExpanded = expandedOrders.has(order.id);
+          orders.map((order, index) => {
+            const isExpanded = expandedOrders.has(order.uuid);
             return (
               <TouchableOpacity
-                key={order.id}
+                key={order.uuid}
                 style={styles.orderCard}
-                onPress={() => toggleExpanded(order.id)}
+                onPress={() => toggleExpanded(order.uuid)}
               >
                 <View style={styles.orderHeader}>
                   <View style={styles.orderHeaderLeft}>
-                    <ThemedText style={styles.orderId}>{order.id}</ThemedText>
+                    <ThemedText style={styles.orderId}>{order.uuid}</ThemedText>
                     <IconSymbol
                       name={isExpanded ? "chevron.up" : "chevron.down"}
                       size={16}
@@ -202,28 +166,22 @@ export default function HistoryScreen() {
                 {isExpanded && (
                   <View style={styles.expandedContent}>
                     {order.items && Array.isArray(order.items) ? (
-                      order.items.map((item, itemIndex) => (
+                      order.items.map((item) => (
                         <ThemedText key={item.id} style={styles.orderText}>
-                          {item.name} ({item.quantity} {item.unit}) -{" "}
-                          <ThemedText style={styles.categoryText}>
-                            {item.category}
-                          </ThemedText>
+                          {item.name} ({item.quantity} {item.typeOfUnit})
                         </ThemedText>
                       ))
                     ) : (
                       <ThemedText style={styles.orderText}>
-                        {(order as any).item} from{" "}
-                        <ThemedText style={styles.categoryText}>
-                          {(order as any).category}
-                        </ThemedText>
+                        No items available
                       </ThemedText>
                     )}
                     <ThemedText style={styles.orderUser}>
-                      Created by: {order.user}
+                      Created by: {order.owner.name}
                     </ThemedText>
                     <ThemedText style={styles.orderDate}>
-                      {order.createdAt.toLocaleDateString()} at{" "}
-                      {order.createdAt.toLocaleTimeString()}
+                      {new Date(order.created_at).toLocaleDateString()} at{" "}
+                      {new Date(order.created_at).toLocaleTimeString()}
                     </ThemedText>
                   </View>
                 )}
@@ -290,7 +248,7 @@ const styles = StyleSheet.create({
     padding: 0,
     paddingTop: 0,
     paddingBottom: 0,
-    paddingVertical: 0
+    paddingVertical: 0,
   },
   statusPicker: {
     height: 60,

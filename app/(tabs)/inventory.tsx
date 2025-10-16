@@ -1,9 +1,15 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useCategory } from "@/context/CategoryContext";
-import { useInventory } from "@/context/InventoryContext";
-import { InventoryItem } from "@/data/mockData";
+import {
+  useCreateCategoryMutation,
+  useCreateItemMutation,
+  useDeleteCategoryMutation,
+  useDeleteItemMutation,
+  useGetInventoryQuery,
+  useUpdateCategoryMutation,
+  useUpdateItemMutation,
+} from "@/redux/products/apiSlice";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -19,21 +25,16 @@ import {
 
 export default function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
-  const {
-    state: inventoryState,
-    addItem,
-    updateItem,
-    deleteItem,
-    adjustQuantity,
-    getItemsByCategory,
-    findItem,
-  } = useInventory();
-  const {
-    state: categoryState,
-    addCategory,
-    removeCategory,
-    updateCategory,
-  } = useCategory();
+
+  const { data: inventoryData = [], isLoading, error } = useGetInventoryQuery();
+
+  // Mutation hooks
+  const [createCategory] = useCreateCategoryMutation();
+  const [createItem] = useCreateItemMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
+  const [deleteItem] = useDeleteItemMutation();
+  const [updateCategory] = useUpdateCategoryMutation();
+  const [updateItem] = useUpdateItemMutation();
 
   // New category dropdown state
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -81,17 +82,21 @@ export default function InventoryScreen() {
 
   // Get items for the selected edit category
   const editCategoryItems = selectedEditItemCategory
-    ? getItemsByCategory(selectedEditItemCategory)
+    ? inventoryData.find((cat) => cat.name === selectedEditItemCategory)
+        ?.items || []
     : [];
 
   // Get items for the selected manual entry category
   const manualCategoryItems = selectedManualCategory
-    ? getItemsByCategory(selectedManualCategory)
+    ? inventoryData.find((cat) => cat.name === selectedManualCategory)?.items ||
+      []
     : [];
 
   // Get the selected item's quantity for the slider
   const selectedItemQuantity = selectedManualItem
-    ? findItem(selectedManualItem, selectedManualCategory)?.quantity || 0
+    ? inventoryData
+        .find((cat) => cat.name === selectedManualCategory)
+        ?.items.find((item) => item.name === selectedManualItem)?.quantity || 0
     : 0;
 
   // Adjust quantity when switching to selling mode or when item changes
@@ -105,22 +110,22 @@ export default function InventoryScreen() {
     }
   }, [isBuying, selectedManualItem, selectedItemQuantity, quantityToSell]);
 
-  // Initialize expanded sections based on categories from context
+  // Initialize expanded sections based on categories from Redux
   const [expandedSections, setExpandedSections] = useState<{
     [key: string]: boolean;
   }>(() => {
     const initialSections: { [key: string]: boolean } = {};
-    categoryState.categories.forEach((category) => {
+    inventoryData.forEach((category) => {
       initialSections[category.name] = false;
     });
     return initialSections;
   });
 
-  // First establish categories from context, then populate with items
-  const groupedItems = categoryState.categories.reduce((acc, category) => {
-    acc[category.name] = getItemsByCategory(category.name);
+  // Create grouped items from Redux data
+  const groupedItems = inventoryData.reduce((acc, category) => {
+    acc[category.name] = category.items;
     return acc;
-  }, {} as { [key: string]: InventoryItem[] });
+  }, {} as { [key: string]: any[] });
 
   // Ensure we always start on "Edit" tab when navigating to this screen
   useFocusEffect(
@@ -133,14 +138,14 @@ export default function InventoryScreen() {
   useEffect(() => {
     setExpandedSections((prev) => {
       const newSections = { ...prev };
-      categoryState.categories.forEach((category) => {
+      inventoryData.forEach((category) => {
         if (!(category.name in newSections)) {
           newSections[category.name] = false; // New categories start closed
         }
       });
       return newSections;
     });
-  }, [categoryState.categories]);
+  }, [inventoryData]);
 
   const toggleSection = (category: string) => {
     setExpandedSections((prev) => ({
@@ -149,61 +154,80 @@ export default function InventoryScreen() {
     }));
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (newCategoryName.trim()) {
-      addCategory(newCategoryName.trim());
-      setNewCategoryName("");
-      setShowAddCategory(false);
-      Alert.alert("Success", "Category added successfully!");
+      try {
+        await createCategory({
+          name: newCategoryName.trim(),
+          items: [],
+        }).unwrap();
+        setNewCategoryName("");
+        setShowAddCategory(false);
+        Alert.alert("Success", "Category added successfully!");
+      } catch (error) {
+        Alert.alert("Error", "Failed to add category. Please try again.");
+      }
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (
       newItemName.trim() &&
       newItemQuantity.trim() &&
       newItemUnit.trim() &&
       selectedCategory
     ) {
-      const newItem: InventoryItem = {
-        id: `item-${Date.now()}`,
-        name: newItemName.trim(),
-        quantity: parseInt(newItemQuantity) || 0,
-        unit: newItemUnit.trim(),
-        category: selectedCategory,
-        price: newItemPrice.trim() ? parseFloat(newItemPrice) : undefined,
-      };
+      try {
+        const categoryId = inventoryData.find(
+          (cat) => cat.name === selectedCategory
+        )?.id;
+        if (!categoryId) {
+          Alert.alert("Error", "Selected category not found.");
+          return;
+        }
 
-      addItem(newItem);
+        await createItem({
+          name: newItemName.trim(),
+          quantity: parseInt(newItemQuantity) || 0,
+          typeOfUnit: newItemUnit.trim(),
+          price: newItemPrice.trim() ? parseFloat(newItemPrice) : undefined,
+        }).unwrap();
 
-      // Reset form
-      setNewItemName("");
-      setNewItemQuantity("");
-      setNewItemUnit("");
-      setNewItemPrice("");
-      setSelectedCategory("");
-      setShowAddItem(false);
+        // Reset form
+        setNewItemName("");
+        setNewItemQuantity("");
+        setNewItemUnit("");
+        setNewItemPrice("");
+        setSelectedCategory("");
+        setShowAddItem(false);
 
-      Alert.alert("Success", "Item added successfully!");
+        Alert.alert("Success", "Item added successfully!");
+      } catch (error) {
+        Alert.alert("Error", "Failed to add item. Please try again.");
+      }
     } else {
       Alert.alert("Error", "Please fill in all required fields");
     }
   };
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (deleteCategoryName.trim()) {
       // Find category by exact name match
-      const categoryToDelete = categoryState.categories.find(
+      const categoryToDelete = inventoryData.find(
         (cat) => cat.name === deleteCategoryName.trim()
       );
       if (categoryToDelete) {
-        removeCategory(categoryToDelete.id);
-        Alert.alert(
-          "Success",
-          `Category "${deleteCategoryName.trim()}" deleted successfully!`
-        );
-        setDeleteCategoryName("");
-        setShowDeleteCategory(false);
+        try {
+          await deleteCategory(categoryToDelete.id).unwrap();
+          Alert.alert(
+            "Success",
+            `Category "${deleteCategoryName.trim()}" deleted successfully!`
+          );
+          setDeleteCategoryName("");
+          setShowDeleteCategory(false);
+        } catch (error) {
+          Alert.alert("Error", "Failed to delete category. Please try again.");
+        }
       } else {
         Alert.alert(
           "Error",
@@ -215,15 +239,15 @@ export default function InventoryScreen() {
     }
   };
 
-  const handleEditCategory = () => {
+  const handleEditCategory = async () => {
     if (selectedEditCategory && editCategoryName.trim()) {
       // Find category to edit
-      const categoryToEdit = categoryState.categories.find(
+      const categoryToEdit = inventoryData.find(
         (cat) => cat.name === selectedEditCategory
       );
       if (categoryToEdit) {
         // Check if new name already exists
-        const nameExists = categoryState.categories.some(
+        const nameExists = inventoryData.some(
           (cat) =>
             cat.name === editCategoryName.trim() && cat.id !== categoryToEdit.id
         );
@@ -232,37 +256,41 @@ export default function InventoryScreen() {
           return;
         }
 
-        // Update category name
-        const updatedCategory = {
-          ...categoryToEdit,
-          name: editCategoryName.trim(),
-        };
-
-        updateCategory(updatedCategory);
-        Alert.alert(
-          "Success",
-          `Category "${selectedEditCategory}" renamed to "${editCategoryName.trim()}" successfully!`
-        );
-        setSelectedEditCategory("");
-        setEditCategoryName("");
-        setShowEditCategory(false);
+        try {
+          await updateCategory({
+            ...categoryToEdit,
+            name: editCategoryName.trim(),
+          }).unwrap();
+          Alert.alert(
+            "Success",
+            `Category "${selectedEditCategory}" renamed to "${editCategoryName.trim()}" successfully!`
+          );
+          setSelectedEditCategory("");
+          setEditCategoryName("");
+          setShowEditCategory(false);
+        } catch (error) {
+          Alert.alert("Error", "Failed to update category. Please try again.");
+        }
       }
     } else {
       Alert.alert("Error", "Please select a category and enter a new name");
     }
   };
 
-  const handleEditItem = () => {
+  const handleEditItem = async () => {
     if (selectedEditItemCategory && selectedEditItem && editItemName.trim()) {
       // Find item to edit
-      const itemToEdit = inventoryItems.find(
-        (item) =>
-          item.name === selectedEditItem &&
-          item.category === selectedEditItemCategory
+      const category = inventoryData.find(
+        (cat) => cat.name === selectedEditItemCategory
       );
+      const itemToEdit = category?.items.find(
+        (item) => item.name === selectedEditItem
+      );
+
       if (itemToEdit) {
         // Check if new name already exists
-        const nameExists = inventoryItems.some(
+        const allItems = inventoryData.flatMap((cat) => cat.items);
+        const nameExists = allItems.some(
           (item) =>
             item.name === editItemName.trim() && item.id !== itemToEdit.id
         );
@@ -271,23 +299,24 @@ export default function InventoryScreen() {
           return;
         }
 
-        // Update item name and price
-        const updatedItem = {
-          ...itemToEdit,
-          name: editItemName.trim(),
-          price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
-        };
-
-        updateItem(updatedItem);
-        Alert.alert(
-          "Success",
-          `Item "${selectedEditItem}" updated successfully!`
-        );
-        setSelectedEditItemCategory("");
-        setSelectedEditItem("");
-        setEditItemName("");
-        setEditItemPrice("");
-        setShowEditItem(false);
+        try {
+          await updateItem({
+            ...itemToEdit,
+            name: editItemName.trim(),
+            price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
+          }).unwrap();
+          Alert.alert(
+            "Success",
+            `Item "${selectedEditItem}" updated successfully!`
+          );
+          setSelectedEditItemCategory("");
+          setSelectedEditItem("");
+          setEditItemName("");
+          setEditItemPrice("");
+          setShowEditItem(false);
+        } catch (error) {
+          Alert.alert("Error", "Failed to update item. Please try again.");
+        }
       }
     } else {
       Alert.alert(
@@ -297,20 +326,25 @@ export default function InventoryScreen() {
     }
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (deleteItemName.trim()) {
       // Find item by exact name match
-      const itemToDelete = inventoryState.items.find(
+      const allItems = inventoryData.flatMap((cat) => cat.items);
+      const itemToDelete = allItems.find(
         (item) => item.name === deleteItemName.trim()
       );
       if (itemToDelete) {
-        deleteItem(deleteItemName.trim());
-        Alert.alert(
-          "Success",
-          `Item "${deleteItemName.trim()}" deleted successfully!`
-        );
-        setDeleteItemName("");
-        setShowDeleteItem(false);
+        try {
+          await deleteItem(itemToDelete.id).unwrap();
+          Alert.alert(
+            "Success",
+            `Item "${deleteItemName.trim()}" deleted successfully!`
+          );
+          setDeleteItemName("");
+          setShowDeleteItem(false);
+        } catch (error) {
+          Alert.alert("Error", "Failed to delete item. Please try again.");
+        }
       } else {
         Alert.alert(
           "Error",
@@ -322,86 +356,106 @@ export default function InventoryScreen() {
     }
   };
 
-  const handleManualEntrySubmit = () => {
+  const handleManualEntrySubmit = async () => {
     if (selectedManualCategory && selectedManualItem) {
-      const existingItem = findItem(selectedManualItem, selectedManualCategory);
+      const category = inventoryData.find(
+        (cat) => cat.name === selectedManualCategory
+      );
+      const existingItem = category?.items.find(
+        (item) => item.name === selectedManualItem
+      );
 
-      if (isBuying) {
-        // When buying, add to inventory
-        const buyQuantity = quantityToSell || 1; // Use quantityToSell for buying too
-        if (existingItem) {
-          // Item exists, update quantity
-          adjustQuantity(existingItem.id, buyQuantity);
+      try {
+        if (isBuying) {
+          // When buying, add to inventory
+          const buyQuantity = quantityToSell || 1; // Use quantityToSell for buying too
+          if (existingItem) {
+            // Update existing item quantity
+            await updateItem({
+              ...existingItem,
+              quantity: existingItem.quantity + buyQuantity,
+            }).unwrap();
+          } else {
+            // Create new item
+            const categoryId = category?.id;
+            if (!categoryId) {
+              Alert.alert("Error", "Selected category not found.");
+              return;
+            }
+            await createItem({
+              name: selectedManualItem,
+              quantity: buyQuantity,
+              typeOfUnit: "unit", // Default unit, can be customized later
+            }).unwrap();
+          }
         } else {
-          // Item doesn't exist, create new item
-          const newItem: InventoryItem = {
-            id: `item-${Date.now()}`,
-            name: selectedManualItem,
-            category: selectedManualCategory,
-            quantity: buyQuantity,
-            unit: "unit", // Default unit, can be customized later
-          };
-          addItem(newItem);
-        }
-      } else {
-        // When selling, remove from inventory
-        if (existingItem) {
-          const sellQuantity = quantityToSell || 1;
+          // When selling, remove from inventory
+          if (existingItem) {
+            const sellQuantity = quantityToSell || 1;
 
-          if (existingItem.quantity >= sellQuantity) {
-            if (existingItem.quantity === sellQuantity) {
-              // Remove item completely if selling all
-              deleteItem(existingItem.name);
+            if (existingItem.quantity >= sellQuantity) {
+              if (existingItem.quantity === sellQuantity) {
+                // Remove item completely if selling all
+                await deleteItem(existingItem.id).unwrap();
+              } else {
+                // Reduce quantity
+                await updateItem({
+                  ...existingItem,
+                  quantity: existingItem.quantity - sellQuantity,
+                }).unwrap();
+              }
             } else {
-              // Reduce quantity
-              adjustQuantity(existingItem.id, -sellQuantity);
+              Alert.alert(
+                "Error",
+                `Cannot sell ${sellQuantity} items. Only ${existingItem.quantity} available in inventory.`
+              );
+              return;
             }
           } else {
             Alert.alert(
               "Error",
-              `Cannot sell ${sellQuantity} items. Only ${existingItem.quantity} available in inventory.`
+              "Item not found in inventory. Cannot sell items that don't exist."
             );
             return;
           }
-        } else {
-          Alert.alert(
-            "Error",
-            "Item not found in inventory. Cannot sell items that don't exist."
-          );
-          return;
         }
+
+        const action = isBuying ? "buying" : "selling";
+        const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
+        Alert.alert(
+          "Success",
+          `Manual entry submitted: ${action} ${selectedManualItem} from ${selectedManualCategory}${quantityText}`
+        );
+
+        // Reset form and close modal
+        setSelectedManualCategory("");
+        setSelectedManualItem("");
+        setQuantityToSell(0);
+        setIsBuying(true);
+        setShowManualEntryModal(false);
+      } catch (error) {
+        Alert.alert(
+          "Error",
+          "Failed to process manual entry. Please try again."
+        );
       }
-
-      const action = isBuying ? "buying" : "selling";
-      const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
-      Alert.alert(
-        "Success",
-        `Manual entry submitted: ${action} ${selectedManualItem} from ${selectedManualCategory}${quantityText}`
-      );
-
-      // Reset form and close modal
-      setSelectedManualCategory("");
-      setSelectedManualItem("");
-      setQuantityToSell(0);
-      setIsBuying(true);
-      setShowManualEntryModal(false);
     } else {
       Alert.alert("Error", "Please select both category and item");
     }
   };
 
-  const renderInventoryItem = ({ item }: { item: InventoryItem }) => (
+  const renderInventoryItem = ({ item }: { item: any }) => (
     <ThemedView style={styles.itemCard}>
       <View style={styles.itemHeader}>
         <ThemedText style={styles.itemName}>{item.name}</ThemedText>
         <ThemedText style={styles.itemQuantity}>
-          {item.quantity} {item.unit}
+          {item.quantity} {item.typeOfUnit}
         </ThemedText>
       </View>
     </ThemedView>
   );
 
-  const renderCategorySection = (category: string, items: InventoryItem[]) => {
+  const renderCategorySection = (category: string, items: any[]) => {
     const isExpanded = expandedSections[category];
     const itemCount = items.length;
 
@@ -480,7 +534,19 @@ export default function InventoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === "inventory" ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateText}>
+              Loading inventory...
+            </ThemedText>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateText}>
+              Error loading inventory. Please try again.
+            </ThemedText>
+          </View>
+        ) : activeTab === "inventory" ? (
           <View style={styles.accordionContainer}>
             {Object.entries(groupedItems).map(([category, items]) =>
               renderCategorySection(category, items)
@@ -573,7 +639,7 @@ export default function InventoryScreen() {
                       showsHorizontalScrollIndicator={false}
                       style={styles.categoryScroll}
                     >
-                      {categoryState.categories.map((category) => (
+                      {inventoryData.map((category) => (
                         <TouchableOpacity
                           key={category.id}
                           style={[
@@ -738,7 +804,7 @@ export default function InventoryScreen() {
                       showsHorizontalScrollIndicator={false}
                       style={styles.categoryScroll}
                     >
-                      {categoryState.categories.map((category) => (
+                      {inventoryData.map((category) => (
                         <TouchableOpacity
                           key={category.id}
                           style={[
@@ -814,7 +880,7 @@ export default function InventoryScreen() {
                       showsHorizontalScrollIndicator={false}
                       style={styles.categoryScroll}
                     >
-                      {categoryState.categories.map((category) => (
+                      {inventoryData.map((category) => (
                         <TouchableOpacity
                           key={category.id}
                           style={[
@@ -1026,7 +1092,7 @@ export default function InventoryScreen() {
                 showsHorizontalScrollIndicator={false}
                 style={styles.modalScroll}
               >
-                {categoryState.categories.map((category) => (
+                {inventoryData.map((category) => (
                   <TouchableOpacity
                     key={category.id}
                     style={[
@@ -1143,11 +1209,11 @@ export default function InventoryScreen() {
                     {isBuying
                       ? `Adding to inventory`
                       : `Available: ${selectedItemQuantity} ${
-                          inventoryItems.find(
-                            (item) =>
-                              item.name === selectedManualItem &&
-                              item.category === selectedManualCategory
-                          )?.unit || "units"
+                          inventoryData
+                            .find((cat) => cat.name === selectedManualCategory)
+                            ?.items.find(
+                              (item) => item.name === selectedManualItem
+                            )?.typeOfUnit || "units"
                         }`}
                   </ThemedText>
                 </>
@@ -1645,5 +1711,17 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 8,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
   },
 });
