@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore } from "@reduxjs/toolkit";
 import {
   FLUSH,
   PAUSE,
@@ -6,9 +6,13 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
-} from 'redux-persist';
-import persistStore from 'redux-persist/es/persistStore';
-import rootReducer from './reducer';
+} from "redux-persist";
+import persistStore from "redux-persist/es/persistStore";
+import { authApi } from "./auth/apiSlice";
+import { exportApi } from "./export/apiSlice";
+import { ordersApi } from "./orders/apiSlice";
+import { productsApi } from "./products/apiSlice";
+import rootReducer from "./reducer";
 
 const rootStore = configureStore({
   reducer: rootReducer,
@@ -20,9 +24,13 @@ const rootStore = configureStore({
       },
       immutableCheck: { warnAfter: 128 },
     })
+      .concat(authApi.middleware)
+      .concat(productsApi.middleware)
+      .concat(ordersApi.middleware)
+      .concat(exportApi.middleware);
 
     return middleware;
-  }
+  },
 });
 
 export const persistor = persistStore(rootStore, null);

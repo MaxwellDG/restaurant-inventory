@@ -11,10 +11,11 @@ export type Order = {
     uuid: string
     owner: User
     items: Item[]
+    total: string
+    subtotal: string
     status: keyof typeof ORDER_STATUS
     created_at: Date
     updated_at: Date
 }
-
 
 export type OrderResponse = Order[]
