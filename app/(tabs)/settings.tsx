@@ -1,26 +1,70 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useLogoutMutation } from "@/redux/auth/apiSlice";
+import { clearCredentials } from "@/redux/auth/slice";
+import { RootState } from "@/redux/reducer";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 const dummyMembers: any[] = [];
 
 export default function SettingsScreen() {
   const [isMembersExpanded, setIsMembersExpanded] = useState(false);
+  const [logout, { isLoading }] = useLogoutMutation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const handleExportData = () => {
     router.push("/export-data");
   };
 
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout().unwrap();
+            dispatch(clearCredentials());
+            router.replace("/");
+          } catch (error) {
+            // Even if logout fails on server, clear local credentials
+            dispatch(clearCredentials());
+            router.replace("/");
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
+
+      {/* User Info Section */}
+      {user && (
+        <View style={styles.section}>
+          <View style={styles.userInfo}>
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userEmail}>{user.email}</Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <TouchableOpacity
@@ -70,6 +114,29 @@ export default function SettingsScreen() {
             ))}
           </View>
         )}
+      </View>
+
+      {/* Logout Section */}
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={[
+            styles.logoutButton,
+            isLoading && styles.logoutButtonDisabled,
+          ]}
+          onPress={handleLogout}
+          disabled={isLoading}
+        >
+          <View style={styles.logoutContent}>
+            <IconSymbol
+              name="rectangle.portrait.and.arrow.right"
+              size={24}
+              color="#FF3B30"
+            />
+            <Text style={styles.logoutText}>
+              {isLoading ? "Logging out..." : "Logout"}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -158,5 +225,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     marginRight: 8,
+  },
+  userInfo: {
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "#666",
+  },
+  logoutButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff5f5",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#fed7d7",
+  },
+  logoutButtonDisabled: {
+    backgroundColor: "#f7f7f7",
+    borderColor: "#e0e0e0",
+  },
+  logoutContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logoutText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FF3B30",
+    marginLeft: 12,
   },
 });

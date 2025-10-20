@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useLoginMutation } from "@/redux/auth/apiSlice";
+import { useRegisterMutation } from "@/redux/auth/apiSlice";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -16,10 +16,12 @@ import {
 } from "react-native";
 import { useDispatch } from "react-redux";
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [login, { isLoading }] = useLoginMutation();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [register, { isLoading }] = useRegisterMutation();
   const dispatch = useDispatch();
 
   const validateEmail = (email: string) => {
@@ -27,7 +29,12 @@ export default function LoginScreen() {
     return emailRegex.test(email);
   };
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Please enter your name");
+      return;
+    }
+
     if (!email.trim()) {
       Alert.alert("Error", "Please enter your email address");
       return;
@@ -43,33 +50,39 @@ export default function LoginScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
+    if (password.length < 8) {
+      Alert.alert("Error", "Password must be at least 8 characters long");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
       return;
     }
 
     try {
-      const result = await login({ email, password }).unwrap();
+      const result = await register({
+        name,
+        email,
+        password,
+        password_confirmation: confirmPassword,
+      }).unwrap();
       dispatch(setCredentials(result));
       Alert.alert(
         "Success",
-        "Login successful! Welcome to Restaurant Tracking!"
+        "Registration successful! Welcome to Restaurant Tracking!"
       );
       router.replace("/inventory");
     } catch (error: any) {
       Alert.alert(
         "Error",
-        error?.data?.message || "Login failed. Please try again."
+        error?.data?.message || "Registration failed. Please try again."
       );
     }
   };
 
-  const handleSignUp = () => {
-    router.push("/register");
-  };
-
-  const handleForgotPassword = () => {
-    router.push("/forgot-password");
+  const handleBackToLogin = () => {
+    router.back();
   };
 
   return (
@@ -82,15 +95,28 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Welcome Back
+              Create Account
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Sign in to your restaurant tracking account
+              Sign up for your restaurant tracking account
             </ThemedText>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.label}>Full Name</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor="#999"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Email Address</ThemedText>
               <TextInput
@@ -119,25 +145,30 @@ export default function LoginScreen() {
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-            >
-              <ThemedText style={styles.forgotPasswordText}>
-                Forgot Password?
-              </ThemedText>
-            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.label}>Confirm Password</ThemedText>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm your password"
+                placeholderTextColor="#999"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
 
             <TouchableOpacity
               style={[
-                styles.loginButton,
-                isLoading && styles.loginButtonDisabled,
+                styles.registerButton,
+                isLoading && styles.registerButtonDisabled,
               ]}
-              onPress={handleLogin}
+              onPress={handleRegister}
               disabled={isLoading}
             >
-              <ThemedText style={styles.loginButtonText}>
-                {isLoading ? "Signing In..." : "Sign In"}
+              <ThemedText style={styles.registerButtonText}>
+                {isLoading ? "Creating Account..." : "Create Account"}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -145,10 +176,10 @@ export default function LoginScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Don't have an account?{" "}
+              Already have an account?{" "}
             </ThemedText>
-            <TouchableOpacity onPress={handleSignUp}>
-              <ThemedText style={styles.signUpText}>Sign Up</ThemedText>
+            <TouchableOpacity onPress={handleBackToLogin}>
+              <ThemedText style={styles.signInText}>Sign In</ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>
@@ -206,27 +237,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#F8F9FA",
   },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  loginButton: {
+  registerButton: {
     backgroundColor: "#007AFF",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 20,
+    marginTop: 20,
   },
-  loginButtonDisabled: {
+  registerButtonDisabled: {
     backgroundColor: "#A0A0A0",
   },
-  loginButtonText: {
-    color: "white",
+  registerButtonText: {
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -234,13 +256,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 30,
   },
   footerText: {
-    fontSize: 14,
-    opacity: 0.7,
+    fontSize: 16,
   },
-  signUpText: {
-    fontSize: 14,
+  signInText: {
+    fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
   },

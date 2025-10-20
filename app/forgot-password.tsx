@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useLoginMutation } from "@/redux/auth/apiSlice";
-import { setCredentials } from "@/redux/auth/slice";
+import { useForgotPasswordMutation } from "@/redux/auth/apiSlice";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -14,20 +13,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useDispatch } from "react-redux";
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [login, { isLoading }] = useLoginMutation();
-  const dispatch = useDispatch();
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleLogin = async () => {
+  const handleForgotPassword = async () => {
     if (!email.trim()) {
       Alert.alert("Error", "Please enter your email address");
       return;
@@ -38,38 +34,28 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!password.trim()) {
-      Alert.alert("Error", "Please enter your password");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
-      return;
-    }
-
     try {
-      const result = await login({ email, password }).unwrap();
-      dispatch(setCredentials(result));
+      await forgotPassword({ email }).unwrap();
       Alert.alert(
         "Success",
-        "Login successful! Welcome to Restaurant Tracking!"
+        "Password reset link has been sent to your email address. Please check your inbox and follow the instructions to reset your password.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]
       );
-      router.replace("/inventory");
     } catch (error: any) {
       Alert.alert(
         "Error",
-        error?.data?.message || "Login failed. Please try again."
+        error?.data?.message || "Failed to send reset email. Please try again."
       );
     }
   };
 
-  const handleSignUp = () => {
-    router.push("/register");
-  };
-
-  const handleForgotPassword = () => {
-    router.push("/forgot-password");
+  const handleBackToLogin = () => {
+    router.back();
   };
 
   return (
@@ -82,10 +68,11 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Welcome Back
+              Forgot Password?
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Sign in to your restaurant tracking account
+              Enter your email address and we'll send you a link to reset your
+              password.
             </ThemedText>
           </View>
 
@@ -105,39 +92,16 @@ export default function LoginScreen() {
               />
             </View>
 
-            <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Password</ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-            >
-              <ThemedText style={styles.forgotPasswordText}>
-                Forgot Password?
-              </ThemedText>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={[
-                styles.loginButton,
-                isLoading && styles.loginButtonDisabled,
+                styles.resetButton,
+                isLoading && styles.resetButtonDisabled,
               ]}
-              onPress={handleLogin}
+              onPress={handleForgotPassword}
               disabled={isLoading}
             >
-              <ThemedText style={styles.loginButtonText}>
-                {isLoading ? "Signing In..." : "Sign In"}
+              <ThemedText style={styles.resetButtonText}>
+                {isLoading ? "Sending..." : "Send Reset Link"}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -145,10 +109,10 @@ export default function LoginScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Don't have an account?{" "}
+              Remember your password?{" "}
             </ThemedText>
-            <TouchableOpacity onPress={handleSignUp}>
-              <ThemedText style={styles.signUpText}>Sign Up</ThemedText>
+            <TouchableOpacity onPress={handleBackToLogin}>
+              <ThemedText style={styles.signInText}>Sign In</ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>
@@ -206,27 +170,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#F8F9FA",
   },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  loginButton: {
+  resetButton: {
     backgroundColor: "#007AFF",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 20,
+    marginTop: 20,
   },
-  loginButtonDisabled: {
+  resetButtonDisabled: {
     backgroundColor: "#A0A0A0",
   },
-  loginButtonText: {
-    color: "white",
+  resetButtonText: {
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -234,13 +189,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 30,
   },
   footerText: {
-    fontSize: 14,
-    opacity: 0.7,
+    fontSize: 16,
   },
-  signUpText: {
-    fontSize: 14,
+  signInText: {
+    fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
   },

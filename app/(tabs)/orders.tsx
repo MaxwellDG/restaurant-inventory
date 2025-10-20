@@ -1,9 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useCategory } from "@/context/CategoryContext";
-import { Order, OrderItem, useOrders } from "@/context/OrdersContext";
 import { useGetInventoryQuery } from "@/redux/products/apiSlice";
+import { Category, Item } from "@/redux/products/types";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -20,160 +19,126 @@ import {
 export default function OrdersScreen() {
   const [showModal, setShowModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedItem, setSelectedItem] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>();
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
-  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
-  const { state: ordersState, addOrder, clearAllOrders } = useOrders();
-  const { state: categoryState } = useCategory();
+  const [pendingItems, setPendingItems] = useState<Item[]>([]);
   const { data: inventoryData, isLoading: inventoryLoading } =
     useGetInventoryQuery();
 
   // Helper functions to work with inventory data
-  const getItemsByCategory = (categoryName: string) => {
+  const getItemsByCategory = (categoryId: number) => {
     if (!inventoryData) return [];
-    const category = inventoryData.find((cat) => cat.name === categoryName);
+    const category = inventoryData.find((cat) => cat.id === categoryId);
     return category ? category.items : [];
   };
 
-  const findItem = (itemName: string, categoryName: string) => {
+  const findItem = (itemId: number, categoryId: number) => {
     if (!inventoryData) return null;
-    const category = inventoryData.find((cat) => cat.name === categoryName);
+    const category = inventoryData.find((cat) => cat.id === categoryId);
     if (!category) return null;
-    return category.items.find((item) => item.name === itemName) || null;
+    return category.items.find((item) => item.id === itemId) || null;
   };
 
-  // Get items for the selected category, filtering out items already in pending orders
+  // Get items for the selected category, filtering out items already in pending items
   const categoryItems = selectedCategory
-    ? getItemsByCategory(selectedCategory).filter((item) => {
-        // Check if this item is already in any pending order
-        return !pendingOrders.some((order) =>
-          order.items.some(
-            (orderItem) =>
-              orderItem.name === item.name &&
-              orderItem.category === selectedCategory
-          )
+    ? getItemsByCategory(selectedCategory.id).filter((item) => {
+        // Check if this item is already in pending items
+        return !pendingItems.some(
+          (pendingItem: Item) =>
+            pendingItem.id === item.id &&
+            pendingItem.category_id === selectedCategory.id
         );
       })
     : [];
 
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = (category: Category) => {
     setSelectedCategory(category);
-    setSelectedItem(""); // Clear item when category changes
+    setSelectedItem(null); // Clear item when category changes
     setOrderQuantity(1); // Reset quantity when category changes
   };
 
-  const handleItemChange = (item: string) => {
+  const handleItemChange = (item: Item) => {
     setSelectedItem(item);
     setOrderQuantity(1); // Reset quantity when item changes
   };
 
-  const handleCreateOrder = () => {
+  const handleSubmitItem = (item: Item) => {
     if (selectedCategory && selectedItem) {
-      // Find the selected item from inventory data to get quantity and unit
-      const selectedInventoryItem = findItem(selectedItem, selectedCategory);
-
-      if (!selectedInventoryItem) {
-        Alert.alert("Error", "Selected item not found in inventory");
-        return;
-      }
-
       // Validate quantity doesn't exceed inventory
-      if (orderQuantity > selectedInventoryItem.quantity) {
+      if (orderQuantity > selectedItem.quantity) {
         Alert.alert(
           "Error",
-          `Cannot order ${orderQuantity} items. Only ${selectedInventoryItem.quantity} available in inventory.`
+          `Cannot order ${orderQuantity} items. Only ${selectedItem.quantity} available in inventory.`
         );
         return;
       }
 
-      const newOrderItem: OrderItem = {
-        id: `item-${Date.now()}`,
-        name: selectedItem,
-        category: selectedCategory,
+      const newItem: Item = {
+        id: selectedItem.id,
+        name: selectedItem.name,
+        category_id: selectedCategory.id,
         quantity: orderQuantity,
-        unit: selectedInventoryItem.typeOfUnit,
+        typeOfUnit: selectedItem.typeOfUnit,
       };
 
-      const newOrder: Order = {
-        id: `order-${Date.now()}`,
-        items: [newOrderItem],
-        user: "Current User", // TODO: Get actual user from auth
-        createdAt: new Date(),
-      };
-
-      setPendingOrders([...pendingOrders, newOrder]);
+      setPendingItems([...pendingItems, newItem]);
       setShowModal(false);
-      setSelectedCategory("");
-      setSelectedItem("");
+      setSelectedCategory(undefined);
+      setSelectedItem(null);
       setOrderQuantity(1);
     } else {
       Alert.alert("Error", "Please select both category and item");
     }
   };
 
-  const handleDeleteOrder = (orderId: string) => {
-    setPendingOrders(pendingOrders.filter((order) => order.id !== orderId));
+  const handleDeleteItem = (itemId: number) => {
+    setPendingItems(pendingItems.filter((item) => item.id !== itemId));
   };
 
-  const handleClearAllOrders = () => {
-    setPendingOrders([]);
+  const handleClearAllItems = () => {
+    setPendingItems([]);
     setShowClearModal(false);
   };
 
-  const handleIncreaseQuantity = (orderId: string, itemId: string) => {
-    setPendingOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          return {
-            ...order,
-            items: order.items.map((item) => {
-              if (item.id === itemId) {
-                // Find the inventory item to check max quantity
-                const inventoryItem = findItem(item.name, item.category);
-                const maxQuantity = inventoryItem?.quantity || 0;
-                const newQuantity = Math.min(maxQuantity, item.quantity + 1);
+  const handleIncreaseQuantity = (itemId: number) => {
+    setPendingItems((prevItems) =>
+      prevItems.map((item: Item) => {
+        if (item.id === itemId) {
+          // Find the inventory item to check max quantity
+          const inventoryItem = findItem(item.id, item.category_id);
+          const maxQuantity = inventoryItem?.quantity || 0;
+          const newQuantity = Math.min(maxQuantity, item.quantity + 1);
 
-                if (newQuantity > item.quantity) {
-                  return { ...item, quantity: newQuantity };
-                }
-              }
-              return item;
-            }),
-          };
+          if (newQuantity > item.quantity) {
+            return { ...item, quantity: newQuantity };
+          }
         }
-        return order;
+        return item;
       })
     );
   };
 
-  const handleDecreaseQuantity = (orderId: string, itemId: string) => {
-    setPendingOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          return {
-            ...order,
-            items: order.items
-              .map((item) => {
-                if (item.id === itemId) {
-                  const newQuantity = Math.max(1, item.quantity - 1);
-                  return { ...item, quantity: newQuantity };
-                }
-                return item;
-              })
-              .filter((item) => item.quantity > 0), // Remove items with 0 quantity
-          };
-        }
-        return order;
-      })
+  const handleDecreaseQuantity = (itemId: number) => {
+    setPendingItems(
+      (prevItems) =>
+        prevItems
+          .map((item: Item) => {
+            if (item.id === itemId) {
+              const newQuantity = Math.max(1, item.quantity - 1);
+              return { ...item, quantity: newQuantity };
+            }
+            return item;
+          })
+          .filter((item: Item) => item.quantity > 0) // Remove items with 0 quantity
     );
   };
 
-  const SwipeableOrderCard = ({
-    order,
+  const SwipeableItemCard = ({
+    item,
     index,
   }: {
-    order: Order;
+    item: Item;
     index: number;
   }) => {
     const translateX = new Animated.Value(0);
@@ -205,7 +170,7 @@ export default function OrdersScreen() {
             duration: 200,
             useNativeDriver: true,
           }).start(() => {
-            handleDeleteOrder(order.id);
+            handleDeleteItem(item.id);
           });
         } else {
           // Snap back to original position
@@ -229,34 +194,32 @@ export default function OrdersScreen() {
         ]}
         {...panResponder.panHandlers}
       >
-        {order.items.map((item, itemIndex) => (
-          <View key={`${order.id}-${item.id}`} style={styles.orderItemRow}>
-            <View style={styles.orderItemTop}>
-              <ThemedText style={styles.orderItemName}>{item.name}</ThemedText>
-              <View style={styles.orderQuantityControls}>
-                <TouchableOpacity
-                  style={styles.orderQuantityButton}
-                  onPress={() => handleDecreaseQuantity(order.id, item.id)}
-                >
-                  <ThemedText style={styles.orderQuantityButtonText}>
-                    -
-                  </ThemedText>
-                </TouchableOpacity>
-                <ThemedText style={styles.orderQuantityText}>
-                  {item.quantity}
+        <View key={item.id} style={styles.orderItemRow}>
+          <View style={styles.orderItemTop}>
+            <ThemedText style={styles.orderItemName}>{item.name}</ThemedText>
+            <View style={styles.orderQuantityControls}>
+              <TouchableOpacity
+                style={styles.orderQuantityButton}
+                onPress={() => handleDecreaseQuantity(item.id)}
+              >
+                <ThemedText style={styles.orderQuantityButtonText}>
+                  -
                 </ThemedText>
-                <TouchableOpacity
-                  style={styles.orderQuantityButton}
-                  onPress={() => handleIncreaseQuantity(order.id, item.id)}
-                >
-                  <ThemedText style={styles.orderQuantityButtonText}>
-                    +
-                  </ThemedText>
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
+              <ThemedText style={styles.orderQuantityText}>
+                {item.quantity}
+              </ThemedText>
+              <TouchableOpacity
+                style={styles.orderQuantityButton}
+                onPress={() => handleIncreaseQuantity(item.id)}
+              >
+                <ThemedText style={styles.orderQuantityButtonText}>
+                  +
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
-        ))}
+        </View>
       </Animated.View>
     );
   };
@@ -269,7 +232,7 @@ export default function OrdersScreen() {
             <ThemedText type="title" style={styles.title}>
               New Order
             </ThemedText>
-            {pendingOrders.length > 0 && (
+            {pendingItems.length > 0 && (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={() => setShowClearModal(true)}
@@ -292,48 +255,36 @@ export default function OrdersScreen() {
         style={styles.ordersList}
         showsVerticalScrollIndicator={false}
       >
-        {pendingOrders.length === 0 ? (
+        {pendingItems.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
-              No orders yet. Tap the + button to create your first order.
+              No items yet. Tap the + button to add your first item.
             </ThemedText>
           </View>
         ) : (
-          pendingOrders.map((order, index) => (
-            <SwipeableOrderCard key={order.id} order={order} index={index} />
+          pendingItems.map((item, index) => (
+            <SwipeableItemCard key={item.id} item={item} index={index} />
           ))
         )}
       </ScrollView>
 
       {/* Submit Button */}
-      {pendingOrders.length > 0 && (
+      {pendingItems.length > 0 && (
         <View style={styles.submitContainer}>
           <TouchableOpacity
             style={styles.submitButton}
             onPress={() => {
-              // Create one single order with all items
-              const allItems: OrderItem[] = [];
-              pendingOrders.forEach((order) => {
-                allItems.push(...order.items);
-              });
-
-              const singleOrder: Order = {
-                id: `order-${Date.now()}`,
-                items: allItems,
-                user: "Current User", // TODO: Get actual user from auth
-                createdAt: new Date(),
-              };
-
-              addOrder(singleOrder);
+              // TODO: Submit order to API
+              console.log("Order submitted:", pendingItems);
               Alert.alert(
                 "Order Submitted",
-                `Submitted 1 order with ${allItems.length} item(s) successfully!`
+                `Submitted 1 order with ${pendingItems.length} item(s) successfully!`
               );
-              setPendingOrders([]); // Clear pending orders after submission
+              setPendingItems([]); // Clear pending items after submission
             }}
           >
             <ThemedText style={styles.submitButtonText}>
-              Submit ({pendingOrders.length})
+              Submit ({pendingItems.length})
             </ThemedText>
           </TouchableOpacity>
         </View>
@@ -349,9 +300,7 @@ export default function OrdersScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>
-                Create New Order
-              </ThemedText>
+              <ThemedText style={styles.modalTitle}>Add to order</ThemedText>
             </View>
 
             {inventoryLoading ? (
@@ -373,20 +322,20 @@ export default function OrdersScreen() {
                     showsHorizontalScrollIndicator={false}
                     style={styles.categoryScroll}
                   >
-                    {categoryState.categories.map((category) => (
+                    {inventoryData?.map((category: Category) => (
                       <TouchableOpacity
                         key={category.id}
                         style={[
                           styles.categoryOption,
-                          selectedCategory === category.name &&
+                          selectedCategory?.id === category.id &&
                             styles.categoryOptionSelected,
                         ]}
-                        onPress={() => handleCategoryChange(category.name)}
+                        onPress={() => handleCategoryChange(category)}
                       >
                         <ThemedText
                           style={[
                             styles.categoryOptionText,
-                            selectedCategory === category.name &&
+                            selectedCategory?.id === category.id &&
                               styles.categoryOptionTextSelected,
                           ]}
                         >
@@ -411,16 +360,16 @@ export default function OrdersScreen() {
                         key={item.id}
                         style={[
                           styles.itemOption,
-                          selectedItem === item.name &&
+                          selectedItem?.id === item.id &&
                             styles.itemOptionSelected,
                         ]}
-                        onPress={() => handleItemChange(item.name)}
+                        onPress={() => handleItemChange(item)}
                         disabled={!selectedCategory}
                       >
                         <ThemedText
                           style={[
                             styles.itemOptionText,
-                            selectedItem === item.name &&
+                            selectedItem?.id === item.id &&
                               styles.itemOptionTextSelected,
                             !selectedCategory && styles.itemOptionDisabled,
                           ]}
@@ -468,12 +417,7 @@ export default function OrdersScreen() {
                       <TouchableOpacity
                         style={styles.quantityButton}
                         onPress={() => {
-                          const selectedInventoryItem = findItem(
-                            selectedItem,
-                            selectedCategory
-                          );
-                          const maxQuantity =
-                            selectedInventoryItem?.quantity || 0;
+                          const maxQuantity = selectedItem.quantity || 0;
                           setOrderQuantity(
                             Math.min(maxQuantity, orderQuantity + 1)
                           );
@@ -485,10 +429,8 @@ export default function OrdersScreen() {
                       </TouchableOpacity>
                     </View>
                     <ThemedText style={styles.quantityInfo}>
-                      Available:{" "}
-                      {findItem(selectedItem, selectedCategory)?.quantity || 0}{" "}
-                      {findItem(selectedItem, selectedCategory)?.typeOfUnit ||
-                        "units"}
+                      Available: {selectedItem.quantity}{" "}
+                      {selectedItem.typeOfUnit}
                     </ThemedText>
                   </View>
                 )}
@@ -509,11 +451,11 @@ export default function OrdersScreen() {
                   (!selectedCategory || !selectedItem) &&
                     styles.createButtonDisabled,
                 ]}
-                onPress={handleCreateOrder}
+                onPress={() => handleSubmitItem(selectedItem as Item)}
                 disabled={!selectedCategory || !selectedItem}
               >
                 <ThemedText style={styles.createButtonText}>
-                  Create Order
+                  Submit item
                 </ThemedText>
               </TouchableOpacity>
             </View>
@@ -531,11 +473,11 @@ export default function OrdersScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.clearModalContent}>
             <ThemedText style={styles.clearModalTitle}>
-              Clear All Orders
+              Clear All Items
             </ThemedText>
             <ThemedText style={styles.clearModalMessage}>
-              Are you sure you want to remove all {pendingOrders.length}{" "}
-              order(s) from the list? This action cannot be undone.
+              Are you sure you want to remove all {pendingItems.length} item(s)
+              from the list? This action cannot be undone.
             </ThemedText>
             <View style={styles.clearModalButtons}>
               <TouchableOpacity
@@ -548,7 +490,7 @@ export default function OrdersScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.clearConfirmButton}
-                onPress={handleClearAllOrders}
+                onPress={handleClearAllItems}
               >
                 <ThemedText style={styles.clearConfirmButtonText}>
                   Clear All
