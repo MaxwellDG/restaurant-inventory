@@ -27,6 +27,7 @@ export default function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
 
   const { data: inventoryData = [], isLoading, error } = useGetInventoryQuery();
+  console.log("inventory err", error);
 
   // Mutation hooks
   const [createCategory] = useCreateCategoryMutation();
@@ -136,6 +137,7 @@ export default function InventoryScreen() {
 
   // Update expanded sections when categories change
   useEffect(() => {
+    console.log("inventoryData", inventoryData);
     setExpandedSections((prev) => {
       const newSections = { ...prev };
       inventoryData.forEach((category) => {
@@ -145,7 +147,7 @@ export default function InventoryScreen() {
       });
       return newSections;
     });
-  }, [inventoryData]);
+  }, []);
 
   const toggleSection = (category: string) => {
     setExpandedSections((prev) => ({
@@ -191,6 +193,7 @@ export default function InventoryScreen() {
           quantity: parseInt(newItemQuantity) || 0,
           typeOfUnit: newItemUnit.trim(),
           price: newItemPrice.trim() ? parseFloat(newItemPrice) : undefined,
+          category_id: categoryId,
         }).unwrap();
 
         // Reset form
@@ -386,6 +389,7 @@ export default function InventoryScreen() {
               name: selectedManualItem,
               quantity: buyQuantity,
               typeOfUnit: "unit", // Default unit, can be customized later
+              category_id: categoryId,
             }).unwrap();
           }
         } else {

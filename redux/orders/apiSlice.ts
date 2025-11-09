@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQuery } from "../api";
 import { Item } from "../products/types";
-import { baseQuery } from "../RTKApi";
 import { PaginationFilters } from "../types";
 import { API_SLICE_NAME, URL_ORDERS } from "./const";
 import { Order } from "./types";
@@ -18,10 +18,23 @@ export const ordersApi = createApi({
       },
     }),
     getOrders: builder.query<Order[], PaginationFilters>({
-      query(body) {
+      query(params) {
+        const queryParams = new URLSearchParams();
+        if (params.limit !== undefined) {
+          queryParams.append("limit", params.limit.toString());
+        }
+        if (params.page !== undefined) {
+          queryParams.append("page", params.page.toString());
+        }
+        if (params.startDate !== undefined) {
+          queryParams.append("startDate", params.startDate.toString());
+        }
+        if (params.endDate !== undefined) {
+          queryParams.append("endDate", params.endDate.toString());
+        }
+        const queryString = queryParams.toString();
         return {
-          url: URL_ORDERS,
-          body,
+          url: URL_ORDERS + (queryString ? `?${queryString}` : ""),
         };
       },
     }),

@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery } from "../RTKApi";
+import { baseQuery } from "../api";
 import { API_SLICE_NAME, AUTH_ENDPOINTS, URL_AUTH } from "./const";
 import {
   AuthResponse,

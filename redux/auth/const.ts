@@ -1,4 +1,4 @@
-export const API_SLICE_NAME = "auth";
+export const API_SLICE_NAME = "authApi";
 
 export const URL_AUTH = "/auth";
 
