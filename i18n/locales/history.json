@@ -1,0 +1,14 @@
+{
+  "title": "History",
+  "clear": "Clear",
+  "completed": "Completed",
+  "pendingPayment": "Pending Payment",
+  "open": "Open",
+  "loadingOrders": "Loading orders...",
+  "errorLoadingOrders": "Error loading orders. Please try again.",
+  "noOrdersFound": "No orders found. Create your first order to see it here.",
+  "noOrdersForDateRange": "No orders found for the selected date range.",
+  "noItemsAvailable": "No items available",
+  "createdBy": "Created by: {{name}}"
+}
+

@@ -1,0 +1,27 @@
+{
+  "title": "Create Account",
+  "subtitle": "Sign up for your restaurant tracking account",
+  "nameLabel": "Full Name",
+  "namePlaceholder": "Enter your full name",
+  "emailLabel": "Email Address",
+  "emailPlaceholder": "Enter your email",
+  "passwordLabel": "Password",
+  "passwordPlaceholder": "Enter your password",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordPlaceholder": "Confirm your password",
+  "creatingAccount": "Creating Account...",
+  "createAccount": "Create Account",
+  "footerText": "Already have an account?",
+  "signIn": "Sign In",
+  "error": "Error",
+  "enterName": "Please enter your name",
+  "enterEmail": "Please enter your email address",
+  "enterValidEmail": "Please enter a valid email address",
+  "enterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 8 characters long",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "success": "Success",
+  "registrationSuccess": "Registration successful! Welcome to Restaurant Tracking!",
+  "registrationFailed": "Registration failed. Please try again."
+}
+

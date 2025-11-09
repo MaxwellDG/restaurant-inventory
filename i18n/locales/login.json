@@ -1,0 +1,22 @@
+{
+  "title": "Welcome Back",
+  "subtitle": "Sign in to your restaurant tracking account",
+  "emailLabel": "Email Address",
+  "emailPlaceholder": "Enter your email",
+  "passwordLabel": "Password",
+  "passwordPlaceholder": "Enter your password",
+  "forgotPassword": "Forgot Password?",
+  "signingIn": "Signing In...",
+  "signIn": "Sign In",
+  "footerText": "Don't have an account?",
+  "signUp": "Sign Up",
+  "error": "Error",
+  "enterEmail": "Please enter your email address",
+  "enterValidEmail": "Please enter a valid email address",
+  "enterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 6 characters long",
+  "success": "Success",
+  "loginSuccess": "Login successful! Welcome to Restaurant Tracking!",
+  "loginFailed": "Login failed. Please try again."
+}
+

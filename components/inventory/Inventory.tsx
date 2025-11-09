@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Category, Item } from "@/redux/products/types";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface InventoryProps {
@@ -12,6 +13,8 @@ interface InventoryProps {
 }
 
 export function Inventory({ inventoryData, isLoading, error }: InventoryProps) {
+  const { t } = useTranslation();
+
   // Initialize expanded sections based on categories from inventoryData
   const [expandedSections, setExpandedSections] = useState<{
     [key: string]: boolean;
@@ -73,7 +76,7 @@ export function Inventory({ inventoryData, isLoading, error }: InventoryProps) {
           <View style={styles.categoryHeaderLeft}>
             <ThemedText style={styles.categoryTitle}>{category}</ThemedText>
             <ThemedText style={styles.categoryCount}>
-              ({itemCount} items)
+              ({t("inventory.itemsCount", { count: itemCount })})
             </ThemedText>
           </View>
           <IconSymbol
@@ -99,13 +102,13 @@ export function Inventory({ inventoryData, isLoading, error }: InventoryProps) {
       {isLoading ? (
         <View style={styles.emptyState}>
           <ThemedText style={styles.emptyStateText}>
-            Loading inventory...
+            {t("inventory.loading")}
           </ThemedText>
         </View>
       ) : error ? (
         <View style={styles.emptyState}>
           <ThemedText style={styles.emptyStateText}>
-            Error loading inventory. Please try again.
+            {t("inventory.error")}
           </ThemedText>
         </View>
       ) : (

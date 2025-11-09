@@ -4,6 +4,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useGetInventoryQuery } from "@/redux/products/apiSlice";
 import { Category, Item } from "@/redux/products/types";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +18,7 @@ import {
 } from "react-native";
 
 export default function OrdersScreen() {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>();
@@ -68,8 +70,11 @@ export default function OrdersScreen() {
       // Validate quantity doesn't exceed inventory
       if (orderQuantity > selectedItem.quantity) {
         Alert.alert(
-          "Error",
-          `Cannot order ${orderQuantity} items. Only ${selectedItem.quantity} available in inventory.`
+          t("orders.error"),
+          t("orders.cannotOrderQuantity", {
+            orderQuantity,
+            availableQuantity: selectedItem.quantity,
+          })
         );
         return;
       }
@@ -88,7 +93,7 @@ export default function OrdersScreen() {
       setSelectedItem(null);
       setOrderQuantity(1);
     } else {
-      Alert.alert("Error", "Please select both category and item");
+      Alert.alert(t("orders.error"), t("orders.selectBothCategoryAndItem"));
     }
   };
 
@@ -230,14 +235,16 @@ export default function OrdersScreen() {
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
             <ThemedText type="title" style={styles.title}>
-              New Order
+              {t("orders.title")}
             </ThemedText>
             {pendingItems.length > 0 && (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={() => setShowClearModal(true)}
               >
-                <ThemedText style={styles.clearText}>Clear</ThemedText>
+                <ThemedText style={styles.clearText}>
+                  {t("orders.clear")}
+                </ThemedText>
               </TouchableOpacity>
             )}
           </View>
@@ -258,7 +265,7 @@ export default function OrdersScreen() {
         {pendingItems.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
-              No items yet. Tap the + button to add your first item.
+              {t("orders.emptyState")}
             </ThemedText>
           </View>
         ) : (
@@ -277,14 +284,16 @@ export default function OrdersScreen() {
               // TODO: Submit order to API
               console.log("Order submitted:", pendingItems);
               Alert.alert(
-                "Order Submitted",
-                `Submitted 1 order with ${pendingItems.length} item(s) successfully!`
+                t("orders.orderSubmitted"),
+                t("orders.orderSubmittedSuccess", {
+                  count: pendingItems.length,
+                })
               );
               setPendingItems([]); // Clear pending items after submission
             }}
           >
             <ThemedText style={styles.submitButtonText}>
-              Submit ({pendingItems.length})
+              {t("orders.submitWithCount", { count: pendingItems.length })}
             </ThemedText>
           </TouchableOpacity>
         </View>
@@ -300,14 +309,16 @@ export default function OrdersScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Add to order</ThemedText>
+              <ThemedText style={styles.modalTitle}>
+                {t("orders.addToOrder")}
+              </ThemedText>
             </View>
 
             {inventoryLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#007AFF" />
                 <ThemedText style={styles.loadingText}>
-                  Loading inventory...
+                  {t("orders.loadingInventory")}
                 </ThemedText>
               </View>
             ) : (
@@ -315,7 +326,7 @@ export default function OrdersScreen() {
                 {/* Category Selection */}
                 <View style={styles.section}>
                   <ThemedText style={styles.sectionTitle}>
-                    Select Category
+                    {t("orders.selectCategory")}
                   </ThemedText>
                   <ScrollView
                     horizontal
@@ -349,7 +360,7 @@ export default function OrdersScreen() {
                 {/* Item Selection */}
                 <View style={styles.section}>
                   <ThemedText style={styles.sectionTitle}>
-                    Select Item
+                    {t("orders.selectItem")}
                   </ThemedText>
                   <ScrollView
                     style={styles.itemScroll}
@@ -380,13 +391,12 @@ export default function OrdersScreen() {
                     ))}
                     {!selectedCategory && (
                       <ThemedText style={styles.disabledText}>
-                        Please select a category first
+                        {t("orders.selectCategoryFirst")}
                       </ThemedText>
                     )}
                     {selectedCategory && categoryItems.length === 0 && (
                       <ThemedText style={styles.disabledText}>
-                        All items in this category have already been added to
-                        the order
+                        {t("orders.allItemsAdded")}
                       </ThemedText>
                     )}
                   </ScrollView>
@@ -396,7 +406,7 @@ export default function OrdersScreen() {
                 {selectedItem && (
                   <View style={styles.section}>
                     <ThemedText style={styles.sectionTitle}>
-                      Select Quantity
+                      {t("orders.selectQuantity")}
                     </ThemedText>
                     <View style={styles.quantityContainer}>
                       <TouchableOpacity
@@ -429,8 +439,10 @@ export default function OrdersScreen() {
                       </TouchableOpacity>
                     </View>
                     <ThemedText style={styles.quantityInfo}>
-                      Available: {selectedItem.quantity}{" "}
-                      {selectedItem.typeOfUnit}
+                      {t("orders.available", {
+                        quantity: selectedItem.quantity,
+                        unit: selectedItem.typeOfUnit,
+                      })}
                     </ThemedText>
                   </View>
                 )}
@@ -443,7 +455,9 @@ export default function OrdersScreen() {
                 style={styles.cancelButton}
                 onPress={() => setShowModal(false)}
               >
-                <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                <ThemedText style={styles.cancelButtonText}>
+                  {t("orders.cancel")}
+                </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -455,7 +469,7 @@ export default function OrdersScreen() {
                 disabled={!selectedCategory || !selectedItem}
               >
                 <ThemedText style={styles.createButtonText}>
-                  Submit item
+                  {t("orders.submitItem")}
                 </ThemedText>
               </TouchableOpacity>
             </View>
@@ -473,11 +487,10 @@ export default function OrdersScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.clearModalContent}>
             <ThemedText style={styles.clearModalTitle}>
-              Clear All Items
+              {t("orders.clearAllItems")}
             </ThemedText>
             <ThemedText style={styles.clearModalMessage}>
-              Are you sure you want to remove all {pendingItems.length} item(s)
-              from the list? This action cannot be undone.
+              {t("orders.clearAllConfirm", { count: pendingItems.length })}
             </ThemedText>
             <View style={styles.clearModalButtons}>
               <TouchableOpacity
@@ -485,7 +498,7 @@ export default function OrdersScreen() {
                 onPress={() => setShowClearModal(false)}
               >
                 <ThemedText style={styles.clearCancelButtonText}>
-                  Cancel
+                  {t("orders.cancel")}
                 </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -493,7 +506,7 @@ export default function OrdersScreen() {
                 onPress={handleClearAllItems}
               >
                 <ThemedText style={styles.clearConfirmButtonText}>
-                  Clear All
+                  {t("orders.clearAll")}
                 </ThemedText>
               </TouchableOpacity>
             </View>

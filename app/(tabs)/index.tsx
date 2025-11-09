@@ -4,6 +4,7 @@ import { useLoginMutation } from "@/redux/auth/apiSlice";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -17,6 +18,7 @@ import {
 import { useDispatch } from "react-redux";
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [login, { isLoading }] = useLoginMutation();
@@ -29,37 +31,34 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("login.error"), t("login.enterEmail"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      Alert.alert(t("login.error"), t("login.enterValidEmail"));
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Error", "Please enter your password");
+      Alert.alert(t("login.error"), t("login.enterPassword"));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
+      Alert.alert(t("login.error"), t("login.passwordMinLength"));
       return;
     }
 
     try {
       const result = await login({ email, password }).unwrap();
       dispatch(setCredentials(result));
-      Alert.alert(
-        "Success",
-        "Login successful! Welcome to Restaurant Tracking!"
-      );
+      Alert.alert(t("login.success"), t("login.loginSuccess"));
       router.replace("/inventory");
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error?.data?.message || "Login failed. Please try again."
+        t("login.error"),
+        error?.data?.message || t("login.loginFailed")
       );
     }
   };
@@ -82,20 +81,22 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Welcome Back
+              {t("login.title")}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Sign in to your restaurant tracking account
+              {t("login.subtitle")}
             </ThemedText>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Email Address</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("login.emailLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder={t("login.emailPlaceholder")}
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -106,10 +107,12 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Password</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("login.passwordLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder={t("login.passwordPlaceholder")}
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -124,7 +127,7 @@ export default function LoginScreen() {
               onPress={handleForgotPassword}
             >
               <ThemedText style={styles.forgotPasswordText}>
-                Forgot Password?
+                {t("login.forgotPassword")}
               </ThemedText>
             </TouchableOpacity>
 
@@ -137,7 +140,7 @@ export default function LoginScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.loginButtonText}>
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isLoading ? t("login.signingIn") : t("login.signIn")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -145,10 +148,12 @@ export default function LoginScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Don't have an account?{" "}
+              {t("login.footerText")}{" "}
             </ThemedText>
             <TouchableOpacity onPress={handleSignUp}>
-              <ThemedText style={styles.signUpText}>Sign Up</ThemedText>
+              <ThemedText style={styles.signUpText}>
+                {t("login.signUp")}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>

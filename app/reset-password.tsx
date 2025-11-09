@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useResetPasswordMutation } from "@/redux/auth/apiSlice";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,6 +16,7 @@ import {
 } from "react-native";
 
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,35 +30,35 @@ export default function ResetPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("resetPassword.error"), t("resetPassword.enterEmail"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      Alert.alert(
+        t("resetPassword.error"),
+        t("resetPassword.enterValidEmail")
+      );
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Error", "Please enter your new password");
+      Alert.alert(t("resetPassword.error"), t("resetPassword.enterNewPassword"));
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters long");
+      Alert.alert(t("resetPassword.error"), t("resetPassword.passwordMinLength"));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert(t("resetPassword.error"), t("resetPassword.passwordsDoNotMatch"));
       return;
     }
 
     if (!token) {
-      Alert.alert(
-        "Error",
-        "Invalid reset token. Please request a new password reset."
-      );
+      Alert.alert(t("resetPassword.error"), t("resetPassword.invalidToken"));
       return;
     }
 
@@ -68,19 +70,19 @@ export default function ResetPasswordScreen() {
         token: token as string,
       }).unwrap();
       Alert.alert(
-        "Success",
-        "Your password has been reset successfully. You can now sign in with your new password.",
+        t("resetPassword.success"),
+        t("resetPassword.passwordResetSuccess"),
         [
           {
-            text: "OK",
+            text: t("resetPassword.ok"),
             onPress: () => router.replace("/"),
           },
         ]
       );
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error?.data?.message || "Failed to reset password. Please try again."
+        t("resetPassword.error"),
+        error?.data?.message || t("resetPassword.failedToReset")
       );
     }
   };
@@ -99,20 +101,22 @@ export default function ResetPasswordScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Reset Password
+              {t("resetPassword.title")}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Enter your email and new password to reset your account.
+              {t("resetPassword.subtitle")}
             </ThemedText>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Email Address</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("resetPassword.emailLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder={t("resetPassword.emailPlaceholder")}
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -123,10 +127,12 @@ export default function ResetPasswordScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>New Password</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("resetPassword.newPasswordLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your new password"
+                placeholder={t("resetPassword.newPasswordPlaceholder")}
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -137,10 +143,12 @@ export default function ResetPasswordScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Confirm New Password</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("resetPassword.confirmNewPasswordLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Confirm your new password"
+                placeholder={t("resetPassword.confirmNewPasswordPlaceholder")}
                 placeholderTextColor="#999"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -159,7 +167,9 @@ export default function ResetPasswordScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.resetButtonText}>
-                {isLoading ? "Resetting..." : "Reset Password"}
+                {isLoading
+                  ? t("resetPassword.resetting")
+                  : t("resetPassword.resetPassword")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -167,10 +177,12 @@ export default function ResetPasswordScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Remember your password?{" "}
+              {t("resetPassword.footerText")}{" "}
             </ThemedText>
             <TouchableOpacity onPress={handleBackToLogin}>
-              <ThemedText style={styles.signInText}>Sign In</ThemedText>
+              <ThemedText style={styles.signInText}>
+                {t("resetPassword.signIn")}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>

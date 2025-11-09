@@ -4,6 +4,7 @@ import { useRegisterMutation } from "@/redux/auth/apiSlice";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -17,6 +18,7 @@ import {
 import { useDispatch } from "react-redux";
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,32 +33,32 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!name.trim()) {
-      Alert.alert("Error", "Please enter your name");
+      Alert.alert(t("register.error"), t("register.enterName"));
       return;
     }
 
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("register.error"), t("register.enterEmail"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      Alert.alert(t("register.error"), t("register.enterValidEmail"));
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Error", "Please enter your password");
+      Alert.alert(t("register.error"), t("register.enterPassword"));
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters long");
+      Alert.alert(t("register.error"), t("register.passwordMinLength"));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert(t("register.error"), t("register.passwordsDoNotMatch"));
       return;
     }
 
@@ -68,15 +70,12 @@ export default function RegisterScreen() {
         password_confirmation: confirmPassword,
       }).unwrap();
       dispatch(setCredentials(result));
-      Alert.alert(
-        "Success",
-        "Registration successful! Welcome to Restaurant Tracking!"
-      );
+      Alert.alert(t("register.success"), t("register.registrationSuccess"));
       router.replace("/inventory");
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error?.data?.message || "Registration failed. Please try again."
+        t("register.error"),
+        error?.data?.message || t("register.registrationFailed")
       );
     }
   };
@@ -95,20 +94,22 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Create Account
+              {t("register.title")}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Sign up for your restaurant tracking account
+              {t("register.subtitle")}
             </ThemedText>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Full Name</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("register.nameLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your full name"
+                placeholder={t("register.namePlaceholder")}
                 placeholderTextColor="#999"
                 value={name}
                 onChangeText={setName}
@@ -118,10 +119,12 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Email Address</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("register.emailLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder={t("register.emailPlaceholder")}
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -132,10 +135,12 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Password</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("register.passwordLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder={t("register.passwordPlaceholder")}
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -146,10 +151,12 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Confirm Password</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("register.confirmPasswordLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Confirm your password"
+                placeholder={t("register.confirmPasswordPlaceholder")}
                 placeholderTextColor="#999"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -168,7 +175,9 @@ export default function RegisterScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.registerButtonText}>
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading
+                  ? t("register.creatingAccount")
+                  : t("register.createAccount")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -176,10 +185,12 @@ export default function RegisterScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Already have an account?{" "}
+              {t("register.footerText")}{" "}
             </ThemedText>
             <TouchableOpacity onPress={handleBackToLogin}>
-              <ThemedText style={styles.signInText}>Sign In</ThemedText>
+              <ThemedText style={styles.signInText}>
+                {t("register.signIn")}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>

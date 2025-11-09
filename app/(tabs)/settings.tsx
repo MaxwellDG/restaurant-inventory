@@ -4,6 +4,7 @@ import { clearCredentials } from "@/redux/auth/slice";
 import { RootState } from "@/redux/reducer";
 import { router } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   ScrollView,
@@ -17,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 const dummyMembers: any[] = [];
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const [isMembersExpanded, setIsMembersExpanded] = useState(false);
   const [logout, { isLoading }] = useLogoutMutation();
   const dispatch = useDispatch();
@@ -27,13 +29,13 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
+    Alert.alert(t("settings.logoutTitle"), t("settings.logoutConfirm"), [
       {
-        text: "Cancel",
+        text: t("settings.cancel"),
         style: "cancel",
       },
       {
-        text: "Logout",
+        text: t("settings.logout"),
         style: "destructive",
         onPress: async () => {
           try {
@@ -52,7 +54,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+      <Text style={styles.title}>{t("settings.title")}</Text>
 
       {/* User Info Section */}
       {user && (
@@ -73,7 +75,7 @@ export default function SettingsScreen() {
         >
           <View style={styles.exportContent}>
             <IconSymbol name="square.and.arrow.up" size={24} color="#007AFF" />
-            <Text style={styles.exportText}>Export Data</Text>
+            <Text style={styles.exportText}>{t("settings.exportData")}</Text>
           </View>
           <IconSymbol name="chevron.right" size={16} color="#999" />
         </TouchableOpacity>
@@ -84,7 +86,7 @@ export default function SettingsScreen() {
           style={styles.sectionHeader}
           onPress={() => setIsMembersExpanded(!isMembersExpanded)}
         >
-          <Text style={styles.sectionTitle}>Members</Text>
+          <Text style={styles.sectionTitle}>{t("settings.members")}</Text>
           <IconSymbol
             name={isMembersExpanded ? "chevron.up" : "chevron.down"}
             size={20}
@@ -106,7 +108,7 @@ export default function SettingsScreen() {
                       { color: member.role === "admin" ? "#FF6B35" : "#666" },
                     ]}
                   >
-                    {member.role === "admin" ? "Admin" : "User"}
+                    {member.role === "admin" ? t("settings.admin") : t("settings.user")}
                   </Text>
                   <IconSymbol name="chevron.right" size={16} color="#999" />
                 </View>
@@ -133,7 +135,7 @@ export default function SettingsScreen() {
               color="#FF3B30"
             />
             <Text style={styles.logoutText}>
-              {isLoading ? "Logging out..." : "Logout"}
+              {isLoading ? t("settings.loggingOut") : t("settings.logout")}
             </Text>
           </View>
         </TouchableOpacity>

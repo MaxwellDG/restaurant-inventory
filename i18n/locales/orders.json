@@ -1,0 +1,26 @@
+{
+  "title": "New Order",
+  "clear": "Clear",
+  "emptyState": "No items yet. Tap the + button to add your first item.",
+  "submit": "Submit",
+  "submitWithCount": "Submit ({{count}})",
+  "orderSubmitted": "Order Submitted",
+  "orderSubmittedSuccess": "Submitted 1 order with {{count}} item(s) successfully!",
+  "addToOrder": "Add to order",
+  "loadingInventory": "Loading inventory...",
+  "selectCategory": "Select Category",
+  "selectItem": "Select Item",
+  "selectCategoryFirst": "Please select a category first",
+  "allItemsAdded": "All items in this category have already been added to the order",
+  "selectQuantity": "Select Quantity",
+  "available": "Available: {{quantity}} {{unit}}",
+  "cancel": "Cancel",
+  "submitItem": "Submit item",
+  "clearAllItems": "Clear All Items",
+  "clearAllConfirm": "Are you sure you want to remove all {{count}} item(s) from the list? This action cannot be undone.",
+  "clearAll": "Clear All",
+  "error": "Error",
+  "cannotOrderQuantity": "Cannot order {{orderQuantity}} items. Only {{availableQuantity}} available in inventory.",
+  "selectBothCategoryAndItem": "Please select both category and item"
+}
+

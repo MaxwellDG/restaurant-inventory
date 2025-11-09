@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useForgotPasswordMutation } from "@/redux/auth/apiSlice";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,6 +16,7 @@ import {
 } from "react-native";
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
@@ -25,31 +27,34 @@ export default function ForgotPasswordScreen() {
 
   const handleForgotPassword = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("forgotPassword.error"), t("forgotPassword.enterEmail"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      Alert.alert(
+        t("forgotPassword.error"),
+        t("forgotPassword.enterValidEmail")
+      );
       return;
     }
 
     try {
       await forgotPassword({ email }).unwrap();
       Alert.alert(
-        "Success",
-        "Password reset link has been sent to your email address. Please check your inbox and follow the instructions to reset your password.",
+        t("forgotPassword.success"),
+        t("forgotPassword.resetLinkSent"),
         [
           {
-            text: "OK",
+            text: t("forgotPassword.ok"),
             onPress: () => router.back(),
           },
         ]
       );
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error?.data?.message || "Failed to send reset email. Please try again."
+        t("forgotPassword.error"),
+        error?.data?.message || t("forgotPassword.failedToSend")
       );
     }
   };
@@ -68,21 +73,22 @@ export default function ForgotPasswordScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              Forgot Password?
+              {t("forgotPassword.title")}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Enter your email address and we'll send you a link to reset your
-              password.
+              {t("forgotPassword.subtitle")}
             </ThemedText>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Email Address</ThemedText>
+              <ThemedText style={styles.label}>
+                {t("forgotPassword.emailLabel")}
+              </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder={t("forgotPassword.emailPlaceholder")}
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -101,7 +107,9 @@ export default function ForgotPasswordScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.resetButtonText}>
-                {isLoading ? "Sending..." : "Send Reset Link"}
+                {isLoading
+                  ? t("forgotPassword.sending")
+                  : t("forgotPassword.sendResetLink")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -109,10 +117,12 @@ export default function ForgotPasswordScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              Remember your password?{" "}
+              {t("forgotPassword.footerText")}{" "}
             </ThemedText>
             <TouchableOpacity onPress={handleBackToLogin}>
-              <ThemedText style={styles.signInText}>Sign In</ThemedText>
+              <ThemedText style={styles.signInText}>
+                {t("forgotPassword.signIn")}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </ThemedView>

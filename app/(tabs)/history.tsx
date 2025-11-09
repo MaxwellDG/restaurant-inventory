@@ -6,6 +6,7 @@ import { ORDER_STATUS } from "@/redux/orders/types";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Platform,
   ScrollView,
@@ -15,6 +16,7 @@ import {
 } from "react-native";
 
 export default function HistoryScreen() {
+  const { t } = useTranslation();
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -78,14 +80,16 @@ export default function HistoryScreen() {
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
             <ThemedText type="title" style={styles.title}>
-              History
+              {t("history.title")}
             </ThemedText>
             {(startDate || endDate) && (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={handleClearDates}
               >
-                <ThemedText style={styles.clearButtonText}>Clear</ThemedText>
+                <ThemedText style={styles.clearButtonText}>
+                  {t("history.clear")}
+                </ThemedText>
               </TouchableOpacity>
             )}
           </View>
@@ -97,9 +101,15 @@ export default function HistoryScreen() {
               onValueChange={(value) => setSelectedStatus(value)}
               style={styles.statusPicker}
             >
-              <Picker.Item label="Completed" value="COMPLETED" />
-              <Picker.Item label="Pending Payment" value="PENDING_PAYMENT" />
-              <Picker.Item label="Open" value="OPEN" />
+              <Picker.Item
+                label={t("history.completed")}
+                value="COMPLETED"
+              />
+              <Picker.Item
+                label={t("history.pendingPayment")}
+                value="PENDING_PAYMENT"
+              />
+              <Picker.Item label={t("history.open")} value="OPEN" />
             </Picker>
           </View>
           <View style={styles.dateFilterContainer}>
@@ -127,21 +137,21 @@ export default function HistoryScreen() {
         {isLoading ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
-              Loading orders...
+              {t("history.loadingOrders")}
             </ThemedText>
           </View>
         ) : error ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
-              Error loading orders. Please try again.
+              {t("history.errorLoadingOrders")}
             </ThemedText>
           </View>
         ) : orders.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
               {orders.length === 0
-                ? "No orders found. Create your first order to see it here."
-                : "No orders found for the selected date range."}
+                ? t("history.noOrdersFound")
+                : t("history.noOrdersForDateRange")}
             </ThemedText>
           </View>
         ) : (
@@ -173,11 +183,11 @@ export default function HistoryScreen() {
                       ))
                     ) : (
                       <ThemedText style={styles.orderText}>
-                        No items available
+                        {t("history.noItemsAvailable")}
                       </ThemedText>
                     )}
                     <ThemedText style={styles.orderUser}>
-                      Created by: {order.owner.name}
+                      {t("history.createdBy", { name: order.owner.name })}
                     </ThemedText>
                     <ThemedText style={styles.orderDate}>
                       {new Date(order.created_at).toLocaleDateString()} at{" "}

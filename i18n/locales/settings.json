@@ -1,0 +1,13 @@
+{
+  "title": "Settings",
+  "exportData": "Export Data",
+  "members": "Members",
+  "admin": "Admin",
+  "user": "User",
+  "loggingOut": "Logging out...",
+  "logout": "Logout",
+  "logoutTitle": "Logout",
+  "logoutConfirm": "Are you sure you want to logout?",
+  "cancel": "Cancel"
+}
+

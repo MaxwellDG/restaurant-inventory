@@ -1,0 +1,5 @@
+{
+  "loading": "Loading inventory...",
+  "error": "Error loading inventory. Please try again.",
+  "itemsCount": "{{count}} items"
+}

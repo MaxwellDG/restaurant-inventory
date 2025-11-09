@@ -11,6 +11,8 @@ import { Provider } from "react-redux";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import rootStore from "@/redux/store";
 
+import "@/i18n";
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
