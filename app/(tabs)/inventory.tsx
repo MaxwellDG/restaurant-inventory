@@ -1,3 +1,4 @@
+import { Inventory } from "@/components/inventory/Inventory";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -111,50 +112,12 @@ export default function InventoryScreen() {
     }
   }, [isBuying, selectedManualItem, selectedItemQuantity, quantityToSell]);
 
-  // Initialize expanded sections based on categories from Redux
-  const [expandedSections, setExpandedSections] = useState<{
-    [key: string]: boolean;
-  }>(() => {
-    const initialSections: { [key: string]: boolean } = {};
-    inventoryData.forEach((category) => {
-      initialSections[category.name] = false;
-    });
-    return initialSections;
-  });
-
-  // Create grouped items from Redux data
-  const groupedItems = inventoryData.reduce((acc, category) => {
-    acc[category.name] = category.items;
-    return acc;
-  }, {} as { [key: string]: any[] });
-
   // Ensure we always start on "Edit" tab when navigating to this screen
   useFocusEffect(
     useCallback(() => {
       setActiveTab("edit");
     }, [])
   );
-
-  // Update expanded sections when categories change
-  useEffect(() => {
-    console.log("inventoryData", inventoryData);
-    setExpandedSections((prev) => {
-      const newSections = { ...prev };
-      inventoryData.forEach((category) => {
-        if (!(category.name in newSections)) {
-          newSections[category.name] = false; // New categories start closed
-        }
-      });
-      return newSections;
-    });
-  }, []);
-
-  const toggleSection = (category: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
 
   const handleAddCategory = async () => {
     if (newCategoryName.trim()) {
@@ -448,51 +411,6 @@ export default function InventoryScreen() {
     }
   };
 
-  const renderInventoryItem = ({ item }: { item: any }) => (
-    <ThemedView style={styles.itemCard}>
-      <View style={styles.itemHeader}>
-        <ThemedText style={styles.itemName}>{item.name}</ThemedText>
-        <ThemedText style={styles.itemQuantity}>
-          {item.quantity} {item.typeOfUnit}
-        </ThemedText>
-      </View>
-    </ThemedView>
-  );
-
-  const renderCategorySection = (category: string, items: any[]) => {
-    const isExpanded = expandedSections[category];
-    const itemCount = items.length;
-
-    return (
-      <ThemedView key={category} style={styles.categorySection}>
-        <TouchableOpacity
-          style={styles.categoryHeader}
-          onPress={() => toggleSection(category)}
-        >
-          <View style={styles.categoryHeaderLeft}>
-            <ThemedText style={styles.categoryTitle}>{category}</ThemedText>
-            <ThemedText style={styles.categoryCount}>
-              ({itemCount} items)
-            </ThemedText>
-          </View>
-          <IconSymbol
-            name={isExpanded ? "chevron.up" : "chevron.down"}
-            size={20}
-            color="#666"
-          />
-        </TouchableOpacity>
-
-        {isExpanded && (
-          <View style={styles.categoryContent}>
-            {items.map((item) => (
-              <View key={item.id}>{renderInventoryItem({ item })}</View>
-            ))}
-          </View>
-        )}
-      </ThemedView>
-    );
-  };
-
   return (
     <ThemedView style={styles.container}>
       {/* Header */}
@@ -538,24 +456,12 @@ export default function InventoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {isLoading ? (
-          <View style={styles.emptyState}>
-            <ThemedText style={styles.emptyStateText}>
-              Loading inventory...
-            </ThemedText>
-          </View>
-        ) : error ? (
-          <View style={styles.emptyState}>
-            <ThemedText style={styles.emptyStateText}>
-              Error loading inventory. Please try again.
-            </ThemedText>
-          </View>
-        ) : activeTab === "inventory" ? (
-          <View style={styles.accordionContainer}>
-            {Object.entries(groupedItems).map(([category, items]) =>
-              renderCategorySection(category, items)
-            )}
-          </View>
+        {activeTab === "inventory" ? (
+          <Inventory
+            inventoryData={inventoryData}
+            isLoading={isLoading}
+            error={!!error}
+          />
         ) : (
           <View style={styles.editContainer}>
             {/* Manual Entry Button */}
@@ -1303,9 +1209,6 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingBottom: 100,
   },
-  accordionContainer: {
-    flex: 1,
-  },
   editContainer: {
     flex: 1,
   },
@@ -1321,64 +1224,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-  },
-  categorySection: {
-    marginBottom: 16,
-    backgroundColor: "white",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E7",
-  },
-  categoryHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-    marginRight: 8,
-  },
-  categoryCount: {
-    fontSize: 14,
-    color: "#666",
-  },
-  categoryContent: {
-    padding: 16,
-  },
-  itemCard: {
-    backgroundColor: "#F8F9FA",
-    padding: 12,
-    marginBottom: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E5E7",
-  },
-  itemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  itemName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-  },
-  itemQuantity: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#007AFF",
   },
   itemCategory: {
     fontSize: 14,
@@ -1715,17 +1560,5 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 8,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 22,
-  },
+  }
 });

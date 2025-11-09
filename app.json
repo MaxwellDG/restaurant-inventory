@@ -21,8 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.restauranttracking",
-      "usesCleartextTraffic": true
+      "package": "com.anonymous.restauranttracking"
     },
     "web": {
       "output": "static",
