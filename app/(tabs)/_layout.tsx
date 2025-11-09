@@ -77,6 +77,12 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="export-data"
+        options={{
+          href: null, // Hide from tab bar but keep in navigation
+        }}
+      />
     </Tabs>
   );
 }

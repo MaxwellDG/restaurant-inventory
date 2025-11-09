@@ -1,0 +1,16 @@
+{
+  "title": "Export Data",
+  "csv": "CSV",
+  "startDate": "Start Date",
+  "endDate": "End Date",
+  "selectDate": "Select date",
+  "emailAddress": "Email Address",
+  "emailPlaceholder": "Enter your email",
+  "submit": "Submit",
+  "error": "Error",
+  "selectBothDates": "Please select both start and end dates",
+  "enterEmail": "Please enter your email address",
+  "success": "Success",
+  "exportRequestSubmitted": "Export request submitted successfully!",
+  "failedToSubmit": "Failed to submit export request. Please try again."
+}

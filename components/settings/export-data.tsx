@@ -3,7 +3,9 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useExportDataMutation } from "@/redux/export/apiSlice";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { router } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Platform,
@@ -15,6 +17,7 @@ import {
 } from "react-native";
 
 export default function ExportDataScreen() {
+  const { t } = useTranslation();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -46,11 +49,11 @@ export default function ExportDataScreen() {
 
   const handleSubmit = async () => {
     if (!startDate || !endDate) {
-      Alert.alert("Error", "Please select both start and end dates");
+      Alert.alert(t("exportData.error"), t("exportData.selectBothDates"));
       return;
     }
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("exportData.error"), t("exportData.enterEmail"));
       return;
     }
     await exportData({
@@ -61,26 +64,32 @@ export default function ExportDataScreen() {
     })
       .unwrap()
       .then(() => {
-        Alert.alert("Success", "Export request submitted successfully!");
+        Alert.alert(
+          t("exportData.success"),
+          t("exportData.exportRequestSubmitted")
+        );
       })
       .catch((error) => {
-        Alert.alert(
-          "Error",
-          "Failed to submit export request. Please try again."
-        );
+        Alert.alert(t("exportData.error"), t("exportData.failedToSubmit"));
       });
   };
 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <IconSymbol name="chevron.left" size={24} color="#007AFF" />
+        </TouchableOpacity>
         <ThemedText type="title" style={styles.title}>
-          Export Data
+          {t("exportData.title")}
         </ThemedText>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <ThemedText style={styles.subheader}>CSV</ThemedText>
+        <ThemedText style={styles.subheader}>{t("exportData.csv")}</ThemedText>
 
         <View style={styles.dateSection}>
           <View style={styles.dateRow}>
@@ -91,9 +100,13 @@ export default function ExportDataScreen() {
               <IconSymbol name="calendar" size={20} color="#007AFF" />
             </TouchableOpacity>
             <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>Start Date</ThemedText>
+              <ThemedText style={styles.dateLabel}>
+                {t("exportData.startDate")}
+              </ThemedText>
               <ThemedText style={styles.dateValue}>
-                {startDate ? startDate.toLocaleDateString() : "Select date"}
+                {startDate
+                  ? startDate.toLocaleDateString()
+                  : t("exportData.selectDate")}
               </ThemedText>
             </View>
           </View>
@@ -106,19 +119,25 @@ export default function ExportDataScreen() {
               <IconSymbol name="calendar" size={20} color="#007AFF" />
             </TouchableOpacity>
             <View style={styles.dateInfo}>
-              <ThemedText style={styles.dateLabel}>End Date</ThemedText>
+              <ThemedText style={styles.dateLabel}>
+                {t("exportData.endDate")}
+              </ThemedText>
               <ThemedText style={styles.dateValue}>
-                {endDate ? endDate.toLocaleDateString() : "Select date"}
+                {endDate
+                  ? endDate.toLocaleDateString()
+                  : t("exportData.selectDate")}
               </ThemedText>
             </View>
           </View>
         </View>
 
         <View style={styles.emailSection}>
-          <ThemedText style={styles.emailLabel}>Email Address</ThemedText>
+          <ThemedText style={styles.emailLabel}>
+            {t("exportData.emailAddress")}
+          </ThemedText>
           <TextInput
             style={styles.emailInput}
-            placeholder="Enter your email"
+            placeholder={t("exportData.emailPlaceholder")}
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
@@ -133,7 +152,9 @@ export default function ExportDataScreen() {
           onPress={handleSubmit}
           disabled={isLoading}
         >
-          <ThemedText style={styles.submitButtonText}>Submit</ThemedText>
+          <ThemedText style={styles.submitButtonText}>
+            {t("exportData.submit")}
+          </ThemedText>
         </TouchableOpacity>
       </ScrollView>
 
@@ -166,12 +187,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
   },
   backButton: {
-    marginRight: 16,
+    marginRight: 8,
+    padding: 4,
   },
   title: {
     fontSize: 28,

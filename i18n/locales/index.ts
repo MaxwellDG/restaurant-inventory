@@ -1,3 +1,4 @@
+import exportData from "./exportData.json";
 import forgotPassword from "./forgotPassword.json";
 import history from "./history.json";
 import inventory from "./inventory.json";
@@ -11,6 +12,7 @@ import settings from "./settings.json";
 import tabs from "./tabs.json";
 
 export default {
+  exportData,
   forgotPassword,
   history,
   inventory,
