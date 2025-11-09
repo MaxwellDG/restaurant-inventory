@@ -13,6 +13,7 @@ import {
 } from "@/redux/products/apiSlice";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Modal,
@@ -25,6 +26,7 @@ import {
 } from "react-native";
 
 export default function InventoryScreen() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
 
   const { data: inventoryData = [], isLoading, error } = useGetInventoryQuery();
@@ -128,9 +130,15 @@ export default function InventoryScreen() {
         }).unwrap();
         setNewCategoryName("");
         setShowAddCategory(false);
-        Alert.alert("Success", "Category added successfully!");
+        Alert.alert(
+          t("inventoryEdit.success"),
+          t("inventoryEdit.categoryAddedSuccess")
+        );
       } catch (error) {
-        Alert.alert("Error", "Failed to add category. Please try again.");
+        Alert.alert(
+          t("inventoryEdit.error"),
+          t("inventoryEdit.failedToAddCategory")
+        );
       }
     }
   };
@@ -147,7 +155,10 @@ export default function InventoryScreen() {
           (cat) => cat.name === selectedCategory
         )?.id;
         if (!categoryId) {
-          Alert.alert("Error", "Selected category not found.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.selectedCategoryNotFound")
+          );
           return;
         }
 
@@ -167,12 +178,21 @@ export default function InventoryScreen() {
         setSelectedCategory("");
         setShowAddItem(false);
 
-        Alert.alert("Success", "Item added successfully!");
+        Alert.alert(
+          t("inventoryEdit.success"),
+          t("inventoryEdit.itemAddedSuccess")
+        );
       } catch (error) {
-        Alert.alert("Error", "Failed to add item. Please try again.");
+        Alert.alert(
+          t("inventoryEdit.error"),
+          t("inventoryEdit.failedToAddItem")
+        );
       }
     } else {
-      Alert.alert("Error", "Please fill in all required fields");
+      Alert.alert(
+        t("inventoryEdit.error"),
+        t("inventoryEdit.fillAllRequiredFields")
+      );
     }
   };
 
@@ -186,22 +206,32 @@ export default function InventoryScreen() {
         try {
           await deleteCategory(categoryToDelete.id).unwrap();
           Alert.alert(
-            "Success",
-            `Category "${deleteCategoryName.trim()}" deleted successfully!`
+            t("inventoryEdit.success"),
+            t("inventoryEdit.categoryDeletedSuccess", {
+              name: deleteCategoryName.trim(),
+            })
           );
           setDeleteCategoryName("");
           setShowDeleteCategory(false);
         } catch (error) {
-          Alert.alert("Error", "Failed to delete category. Please try again.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.failedToDeleteCategory")
+          );
         }
       } else {
         Alert.alert(
-          "Error",
-          `Category "${deleteCategoryName.trim()}" not found. Please check the name and try again.`
+          t("inventoryEdit.error"),
+          t("inventoryEdit.categoryNotFound", {
+            name: deleteCategoryName.trim(),
+          })
         );
       }
     } else {
-      Alert.alert("Error", "Please enter a category name to delete");
+      Alert.alert(
+        t("inventoryEdit.error"),
+        t("inventoryEdit.enterCategoryNameToDelete")
+      );
     }
   };
 
@@ -218,7 +248,10 @@ export default function InventoryScreen() {
             cat.name === editCategoryName.trim() && cat.id !== categoryToEdit.id
         );
         if (nameExists) {
-          Alert.alert("Error", "A category with this name already exists.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.categoryNameExists")
+          );
           return;
         }
 
@@ -228,18 +261,27 @@ export default function InventoryScreen() {
             name: editCategoryName.trim(),
           }).unwrap();
           Alert.alert(
-            "Success",
-            `Category "${selectedEditCategory}" renamed to "${editCategoryName.trim()}" successfully!`
+            t("inventoryEdit.success"),
+            t("inventoryEdit.categoryRenamedSuccess", {
+              oldName: selectedEditCategory,
+              newName: editCategoryName.trim(),
+            })
           );
           setSelectedEditCategory("");
           setEditCategoryName("");
           setShowEditCategory(false);
         } catch (error) {
-          Alert.alert("Error", "Failed to update category. Please try again.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.failedToUpdateCategory")
+          );
         }
       }
     } else {
-      Alert.alert("Error", "Please select a category and enter a new name");
+      Alert.alert(
+        t("inventoryEdit.error"),
+        t("inventoryEdit.selectCategoryAndEnterName")
+      );
     }
   };
 
@@ -261,7 +303,10 @@ export default function InventoryScreen() {
             item.name === editItemName.trim() && item.id !== itemToEdit.id
         );
         if (nameExists) {
-          Alert.alert("Error", "An item with this name already exists.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.itemNameExists")
+          );
           return;
         }
 
@@ -272,8 +317,8 @@ export default function InventoryScreen() {
             price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
           }).unwrap();
           Alert.alert(
-            "Success",
-            `Item "${selectedEditItem}" updated successfully!`
+            t("inventoryEdit.success"),
+            t("inventoryEdit.itemUpdatedSuccess", { name: selectedEditItem })
           );
           setSelectedEditItemCategory("");
           setSelectedEditItem("");
@@ -281,13 +326,16 @@ export default function InventoryScreen() {
           setEditItemPrice("");
           setShowEditItem(false);
         } catch (error) {
-          Alert.alert("Error", "Failed to update item. Please try again.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.failedToUpdateItem")
+          );
         }
       }
     } else {
       Alert.alert(
-        "Error",
-        "Please select a category, item, and enter a new name"
+        t("inventoryEdit.error"),
+        t("inventoryEdit.selectCategoryItemAndEnterName")
       );
     }
   };
@@ -303,22 +351,30 @@ export default function InventoryScreen() {
         try {
           await deleteItem(itemToDelete.id).unwrap();
           Alert.alert(
-            "Success",
-            `Item "${deleteItemName.trim()}" deleted successfully!`
+            t("inventoryEdit.success"),
+            t("inventoryEdit.itemDeletedSuccess", {
+              name: deleteItemName.trim(),
+            })
           );
           setDeleteItemName("");
           setShowDeleteItem(false);
         } catch (error) {
-          Alert.alert("Error", "Failed to delete item. Please try again.");
+          Alert.alert(
+            t("inventoryEdit.error"),
+            t("inventoryEdit.failedToDeleteItem")
+          );
         }
       } else {
         Alert.alert(
-          "Error",
-          `Item "${deleteItemName.trim()}" not found. Please check the name and try again.`
+          t("inventoryEdit.error"),
+          t("inventoryEdit.itemNotFound", { name: deleteItemName.trim() })
         );
       }
     } else {
-      Alert.alert("Error", "Please enter an item name to delete");
+      Alert.alert(
+        t("inventoryEdit.error"),
+        t("inventoryEdit.enterItemNameToDelete")
+      );
     }
   };
 
@@ -373,25 +429,35 @@ export default function InventoryScreen() {
               }
             } else {
               Alert.alert(
-                "Error",
-                `Cannot sell ${sellQuantity} items. Only ${existingItem.quantity} available in inventory.`
+                t("inventoryEdit.error"),
+                t("inventoryEdit.cannotSellQuantity", {
+                  sellQuantity,
+                  availableQuantity: existingItem.quantity,
+                })
               );
               return;
             }
           } else {
             Alert.alert(
-              "Error",
-              "Item not found in inventory. Cannot sell items that don't exist."
+              t("inventoryEdit.error"),
+              t("inventoryEdit.itemNotFoundInInventory")
             );
             return;
           }
         }
 
-        const action = isBuying ? "buying" : "selling";
+        const action = isBuying
+          ? t("inventoryEdit.buying")
+          : t("inventoryEdit.selling");
         const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
         Alert.alert(
-          "Success",
-          `Manual entry submitted: ${action} ${selectedManualItem} from ${selectedManualCategory}${quantityText}`
+          t("inventoryEdit.success"),
+          t("inventoryEdit.manualEntrySubmitted", {
+            action,
+            itemName: selectedManualItem,
+            categoryName: selectedManualCategory,
+            quantityText,
+          })
         );
 
         // Reset form and close modal
@@ -402,12 +468,15 @@ export default function InventoryScreen() {
         setShowManualEntryModal(false);
       } catch (error) {
         Alert.alert(
-          "Error",
-          "Failed to process manual entry. Please try again."
+          t("inventoryEdit.error"),
+          t("inventoryEdit.failedToProcessManualEntry")
         );
       }
     } else {
-      Alert.alert("Error", "Please select both category and item");
+      Alert.alert(
+        t("inventoryEdit.error"),
+        t("inventoryEdit.selectBothCategoryAndItem")
+      );
     }
   };
 
@@ -416,7 +485,7 @@ export default function InventoryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <ThemedText type="title" style={styles.title}>
-          Inventory
+          {t("inventoryEdit.title")}
         </ThemedText>
       </View>
 
@@ -432,7 +501,7 @@ export default function InventoryScreen() {
               activeTab === "edit" && styles.activeTabText,
             ]}
           >
-            Update
+            {t("inventoryEdit.updateTab")}
           </ThemedText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -445,7 +514,7 @@ export default function InventoryScreen() {
               activeTab === "inventory" && styles.activeTabText,
             ]}
           >
-            My Inventory
+            {t("inventoryEdit.myInventoryTab")}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -470,13 +539,15 @@ export default function InventoryScreen() {
               onPress={() => setShowManualEntryModal(true)}
             >
               <ThemedText style={styles.manualEntryButtonText}>
-                Manual Entry
+                {t("inventoryEdit.manualEntry")}
               </ThemedText>
             </TouchableOpacity>
 
             {/* Category Section */}
             <View style={styles.sectionHeader}>
-              <ThemedText style={styles.sectionHeaderText}>Category</ThemedText>
+              <ThemedText style={styles.sectionHeaderText}>
+                {t("inventoryEdit.categorySection")}
+              </ThemedText>
             </View>
 
             {/* Add Category Dropdown */}
@@ -486,7 +557,7 @@ export default function InventoryScreen() {
                 onPress={() => setShowAddCategory(!showAddCategory)}
               >
                 <ThemedText style={styles.dropdownTitle}>
-                  Add New Category
+                  {t("inventoryEdit.addNewCategory")}
                 </ThemedText>
                 <IconSymbol
                   name={showAddCategory ? "chevron.up" : "chevron.down"}
@@ -499,7 +570,7 @@ export default function InventoryScreen() {
                 <View style={styles.dropdownContent}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Category name"
+                    placeholder={t("inventoryEdit.categoryNamePlaceholder")}
                     placeholderTextColor="#999"
                     value={newCategoryName}
                     onChangeText={setNewCategoryName}
@@ -515,7 +586,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
-                      Add Category
+                      {t("inventoryEdit.addCategory")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -529,7 +600,7 @@ export default function InventoryScreen() {
                 onPress={() => setShowEditCategory(!showEditCategory)}
               >
                 <ThemedText style={styles.dropdownTitle}>
-                  Edit Category
+                  {t("inventoryEdit.editCategory")}
                 </ThemedText>
                 <IconSymbol
                   name={showEditCategory ? "chevron.up" : "chevron.down"}
@@ -542,7 +613,7 @@ export default function InventoryScreen() {
                 <View style={styles.dropdownContent}>
                   <View style={styles.categorySelector}>
                     <ThemedText style={styles.selectorLabel}>
-                      Select Category to Edit:
+                      {t("inventoryEdit.selectCategoryToEdit")}
                     </ThemedText>
                     <ScrollView
                       horizontal
@@ -575,7 +646,7 @@ export default function InventoryScreen() {
 
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter new category name"
+                    placeholder={t("inventoryEdit.enterNewCategoryName")}
                     placeholderTextColor="#999"
                     value={editCategoryName}
                     onChangeText={setEditCategoryName}
@@ -593,7 +664,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
-                      Update Category
+                      {t("inventoryEdit.updateCategory")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -607,7 +678,7 @@ export default function InventoryScreen() {
                 onPress={() => setShowDeleteCategory(!showDeleteCategory)}
               >
                 <ThemedText style={styles.dropdownTitle}>
-                  Delete Category
+                  {t("inventoryEdit.deleteCategory")}
                 </ThemedText>
                 <IconSymbol
                   name={showDeleteCategory ? "chevron.up" : "chevron.down"}
@@ -620,7 +691,7 @@ export default function InventoryScreen() {
                 <View style={styles.dropdownContent}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter exact category name"
+                    placeholder={t("inventoryEdit.enterExactCategoryName")}
                     placeholderTextColor="#999"
                     value={deleteCategoryName}
                     onChangeText={setDeleteCategoryName}
@@ -637,7 +708,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="trash" size={16} color="white" />
                     <ThemedText style={styles.deleteButtonText}>
-                      Delete Category
+                      {t("inventoryEdit.deleteCategory")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -646,7 +717,9 @@ export default function InventoryScreen() {
 
             {/* Item Section */}
             <View style={styles.sectionHeader}>
-              <ThemedText style={styles.sectionHeaderText}>Item</ThemedText>
+              <ThemedText style={styles.sectionHeaderText}>
+                {t("inventoryEdit.itemSection")}
+              </ThemedText>
             </View>
 
             {/* Add Item Dropdown */}
@@ -656,7 +729,7 @@ export default function InventoryScreen() {
                 onPress={() => setShowAddItem(!showAddItem)}
               >
                 <ThemedText style={styles.dropdownTitle}>
-                  Add New Item
+                  {t("inventoryEdit.addNewItem")}
                 </ThemedText>
                 <IconSymbol
                   name={showAddItem ? "chevron.up" : "chevron.down"}
@@ -669,7 +742,7 @@ export default function InventoryScreen() {
                 <View style={styles.dropdownContent}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Item name"
+                    placeholder={t("inventoryEdit.itemNamePlaceholder")}
                     placeholderTextColor="#999"
                     value={newItemName}
                     onChangeText={setNewItemName}
@@ -679,7 +752,7 @@ export default function InventoryScreen() {
                   <View style={styles.inputRow}>
                     <TextInput
                       style={[styles.input, styles.inputHalf]}
-                      placeholder="Quantity"
+                      placeholder={t("inventoryEdit.quantityPlaceholder")}
                       placeholderTextColor="#999"
                       value={newItemQuantity}
                       onChangeText={setNewItemQuantity}
@@ -687,7 +760,7 @@ export default function InventoryScreen() {
                     />
                     <TextInput
                       style={[styles.input, styles.inputHalf]}
-                      placeholder="Unit (lbs, bottles, etc.)"
+                      placeholder={t("inventoryEdit.unitPlaceholder")}
                       placeholderTextColor="#999"
                       value={newItemUnit}
                       onChangeText={setNewItemUnit}
@@ -697,7 +770,7 @@ export default function InventoryScreen() {
 
                   <TextInput
                     style={styles.input}
-                    placeholder="Price (optional)"
+                    placeholder={t("inventoryEdit.pricePlaceholder")}
                     placeholderTextColor="#999"
                     value={newItemPrice}
                     onChangeText={setNewItemPrice}
@@ -707,7 +780,7 @@ export default function InventoryScreen() {
                   {/* Category Selection */}
                   <View style={styles.categorySelector}>
                     <ThemedText style={styles.selectorLabel}>
-                      Select Category:
+                      {t("inventoryEdit.selectCategory")}
                     </ThemedText>
                     <ScrollView
                       horizontal
@@ -757,7 +830,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
-                      Add Item
+                      {t("inventoryEdit.addItem")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -770,7 +843,9 @@ export default function InventoryScreen() {
                 style={styles.dropdownHeader}
                 onPress={() => setShowEditItem(!showEditItem)}
               >
-                <ThemedText style={styles.dropdownTitle}>Edit Item</ThemedText>
+                <ThemedText style={styles.dropdownTitle}>
+                  {t("inventoryEdit.editItem")}
+                </ThemedText>
                 <IconSymbol
                   name={showEditItem ? "chevron.up" : "chevron.down"}
                   size={20}
@@ -783,7 +858,7 @@ export default function InventoryScreen() {
                   {/* Step 1: Select Category */}
                   <View style={styles.categorySelector}>
                     <ThemedText style={styles.selectorLabel}>
-                      Select Category:
+                      {t("inventoryEdit.selectCategory")}
                     </ThemedText>
                     <ScrollView
                       horizontal
@@ -821,7 +896,7 @@ export default function InventoryScreen() {
                   {selectedEditItemCategory && (
                     <View style={styles.itemSelector}>
                       <ThemedText style={styles.selectorLabel}>
-                        Select Item to Edit:
+                        {t("inventoryEdit.selectItemToEdit")}
                       </ThemedText>
                       <ScrollView
                         horizontal
@@ -856,7 +931,7 @@ export default function InventoryScreen() {
                   {/* Step 3: Enter New Name */}
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter new item name"
+                    placeholder={t("inventoryEdit.enterNewItemName")}
                     placeholderTextColor="#999"
                     value={editItemName}
                     onChangeText={setEditItemName}
@@ -866,7 +941,7 @@ export default function InventoryScreen() {
                   {/* Step 4: Enter New Price */}
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter new price (optional)"
+                    placeholder={t("inventoryEdit.enterNewPrice")}
                     placeholderTextColor="#999"
                     value={editItemPrice}
                     onChangeText={setEditItemPrice}
@@ -890,7 +965,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="plus" size={16} color="white" />
                     <ThemedText style={styles.addButtonText}>
-                      Update Item
+                      {t("inventoryEdit.updateItem")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -904,7 +979,7 @@ export default function InventoryScreen() {
                 onPress={() => setShowDeleteItem(!showDeleteItem)}
               >
                 <ThemedText style={styles.dropdownTitle}>
-                  Delete Item
+                  {t("inventoryEdit.deleteItem")}
                 </ThemedText>
                 <IconSymbol
                   name={showDeleteItem ? "chevron.up" : "chevron.down"}
@@ -917,7 +992,7 @@ export default function InventoryScreen() {
                 <View style={styles.dropdownContent}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter exact item name"
+                    placeholder={t("inventoryEdit.enterExactItemName")}
                     placeholderTextColor="#999"
                     value={deleteItemName}
                     onChangeText={setDeleteItemName}
@@ -934,7 +1009,7 @@ export default function InventoryScreen() {
                   >
                     <IconSymbol name="trash" size={16} color="white" />
                     <ThemedText style={styles.deleteButtonText}>
-                      Delete Item
+                      {t("inventoryEdit.deleteItem")}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -963,7 +1038,9 @@ export default function InventoryScreen() {
           >
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Have</ThemedText>
+              <ThemedText style={styles.modalTitle}>
+                {t("inventoryEdit.have")}
+              </ThemedText>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowManualEntryModal(false)}
@@ -983,7 +1060,9 @@ export default function InventoryScreen() {
                 ]}
               >
                 <ThemedText style={styles.toggleLabel}>
-                  {isBuying ? "Buying" : "Selling"}
+                  {isBuying
+                    ? t("inventoryEdit.buying")
+                    : t("inventoryEdit.selling")}
                 </ThemedText>
                 <Switch
                   value={isBuying}
@@ -996,7 +1075,9 @@ export default function InventoryScreen() {
 
             {/* Category Selection */}
             <View style={styles.modalSection}>
-              <ThemedText style={styles.modalSectionTitle}>Category</ThemedText>
+              <ThemedText style={styles.modalSectionTitle}>
+                {t("inventoryEdit.category")}
+              </ThemedText>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -1032,7 +1113,9 @@ export default function InventoryScreen() {
             {/* Item Selection */}
             {selectedManualCategory && (
               <View style={styles.modalSection}>
-                <ThemedText style={styles.modalSectionTitle}>Item</ThemedText>
+                <ThemedText style={styles.modalSectionTitle}>
+                  {t("inventoryEdit.item")}
+                </ThemedText>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -1066,7 +1149,10 @@ export default function InventoryScreen() {
             {/* Quantity Selector - Always show */}
             <View style={styles.modalSection}>
               <ThemedText style={styles.modalSectionTitle}>
-                Quantity to {isBuying ? "Buy" : "Sell"}: {quantityToSell}
+                {isBuying
+                  ? t("inventoryEdit.quantityToBuy")
+                  : t("inventoryEdit.quantityToSell")}
+                : {quantityToSell}
               </ThemedText>
               {selectedManualItem ? (
                 <>
@@ -1117,19 +1203,23 @@ export default function InventoryScreen() {
                   </View>
                   <ThemedText style={styles.sliderHelpText}>
                     {isBuying
-                      ? `Adding to inventory`
-                      : `Available: ${selectedItemQuantity} ${
-                          inventoryData
-                            .find((cat) => cat.name === selectedManualCategory)
-                            ?.items.find(
-                              (item) => item.name === selectedManualItem
-                            )?.typeOfUnit || "units"
-                        }`}
+                      ? t("inventoryEdit.addingToInventory")
+                      : t("inventoryEdit.available", {
+                          quantity: selectedItemQuantity,
+                          unit:
+                            inventoryData
+                              .find(
+                                (cat) => cat.name === selectedManualCategory
+                              )
+                              ?.items.find(
+                                (item) => item.name === selectedManualItem
+                              )?.typeOfUnit || "units",
+                        })}
                   </ThemedText>
                 </>
               ) : (
                 <ThemedText style={styles.sliderHelpText}>
-                  Please select an item to set quantity
+                  {t("inventoryEdit.selectItemToSetQuantity")}
                 </ThemedText>
               )}
             </View>
@@ -1145,7 +1235,7 @@ export default function InventoryScreen() {
               disabled={!selectedManualCategory || !selectedManualItem}
             >
               <ThemedText style={styles.modalSubmitButtonText}>
-                Submit
+                {t("inventoryEdit.submit")}
               </ThemedText>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -1560,5 +1650,5 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 8,
-  }
+  },
 });
