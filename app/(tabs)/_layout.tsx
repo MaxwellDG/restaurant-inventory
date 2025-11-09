@@ -83,6 +83,12 @@ export default function TabLayout() {
           href: null, // Hide from tab bar but keep in navigation
         }}
       />
+      <Tabs.Screen
+        name="members"
+        options={{
+          href: null, // Hide from tab bar but keep in navigation
+        }}
+      />
     </Tabs>
   );
 }

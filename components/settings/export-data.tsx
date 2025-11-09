@@ -79,7 +79,7 @@ export default function ExportDataScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push("/settings")}
         >
           <IconSymbol name="chevron.left" size={24} color="#007AFF" />
         </TouchableOpacity>

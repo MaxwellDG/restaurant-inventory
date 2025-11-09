@@ -4,6 +4,7 @@ import history from "./history.json";
 import inventory from "./inventory.json";
 import inventoryEdit from "./inventoryEdit.json";
 import login from "./login.json";
+import members from "./members.json";
 import modal from "./modal.json";
 import orders from "./orders.json";
 import register from "./register.json";
@@ -18,6 +19,7 @@ export default {
   inventory,
   inventoryEdit,
   login,
+  members,
   modal,
   orders,
   register,

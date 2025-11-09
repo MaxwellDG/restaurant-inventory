@@ -1,9 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLogoutMutation } from "@/redux/auth/apiSlice";
 import { clearCredentials } from "@/redux/auth/slice";
-import { RootState } from "@/redux/reducer";
+import { RootState } from "@/redux/store";
 import { router } from "expo-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -15,11 +14,8 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
-const dummyMembers: any[] = [];
-
 export default function SettingsScreen() {
   const { t } = useTranslation();
-  const [isMembersExpanded, setIsMembersExpanded] = useState(false);
   const [logout, { isLoading }] = useLogoutMutation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -84,38 +80,11 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.sectionHeader}
-          onPress={() => setIsMembersExpanded(!isMembersExpanded)}
+          onPress={() => router.push("/members")}
         >
           <Text style={styles.sectionTitle}>{t("settings.members")}</Text>
-          <IconSymbol
-            name={isMembersExpanded ? "chevron.up" : "chevron.down"}
-            size={20}
-            color="#666"
-          />
+          <IconSymbol name="chevron.right" size={16} color="#999" />
         </TouchableOpacity>
-
-        {isMembersExpanded && (
-          <View style={styles.membersList}>
-            {dummyMembers.map((member) => (
-              <TouchableOpacity key={member.id} style={styles.memberItem}>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                </View>
-                <View style={styles.roleContainer}>
-                  <Text
-                    style={[
-                      styles.roleText,
-                      { color: member.role === "admin" ? "#FF6B35" : "#666" },
-                    ]}
-                  >
-                    {member.role === "admin" ? t("settings.admin") : t("settings.user")}
-                  </Text>
-                  <IconSymbol name="chevron.right" size={16} color="#999" />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
       </View>
 
       {/* Logout Section */}
@@ -195,38 +164,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "#333",
-  },
-  membersList: {
-    marginTop: 8,
-  },
-  memberItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 16,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  roleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  roleText: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginRight: 8,
   },
   userInfo: {
     paddingVertical: 15,
