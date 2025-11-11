@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../api";
-import { API_SLICE_NAME, AUTH_ENDPOINTS, URL_AUTH } from "./const";
+import { API_SLICE_NAME, AUTH_ENDPOINTS } from "./const";
 import {
   AuthResponse,
   ForgotPasswordRequest,
@@ -12,7 +12,7 @@ import {
 
 export const authApi = createApi({
   reducerPath: API_SLICE_NAME,
-  baseQuery: baseQuery(false, URL_AUTH),
+  baseQuery: baseQuery(false, ""),
   tagTypes: ["auth"],
   endpoints: (builder) => ({
     register: builder.mutation<AuthResponse, RegisterRequest>({

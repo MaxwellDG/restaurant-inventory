@@ -53,6 +53,7 @@ export default function LoginScreen() {
 
     try {
       const result = await login({ email, password }).unwrap();
+      console.log("result", result);
       dispatch(setCredentials(result));
 
       // Save refresh_token to secure storage if provided
@@ -60,9 +61,9 @@ export default function LoginScreen() {
         await saveRefreshToken(result.refresh_token);
       }
 
-      Alert.alert(t("login.success"), t("login.loginSuccess"));
       router.replace("/inventory");
     } catch (error: any) {
+      console.log("error", error);
       Alert.alert(
         t("login.error"),
         error?.data?.message || t("login.loginFailed")

@@ -30,7 +30,7 @@ export default function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<"inventory" | "edit">("edit");
 
   const { data: inventoryData = [], isLoading, error } = useGetInventoryQuery();
-  console.log("inventory err", error);
+  console.log("inventoryData", inventoryData);
 
   // Mutation hooks
   const [createCategory] = useCreateCategoryMutation();
@@ -95,6 +95,11 @@ export default function InventoryScreen() {
     ? inventoryData.find((cat) => cat.name === selectedManualCategory)?.items ||
       []
     : [];
+
+  // Check if there are any items in the inventory
+  const hasItems = inventoryData.some(
+    (cat) => cat.items && cat.items.length > 0
+  );
 
   // Get the selected item's quantity for the slider
   const selectedItemQuantity = selectedManualItem
@@ -535,8 +540,12 @@ export default function InventoryScreen() {
           <View style={styles.editContainer}>
             {/* Manual Entry Button */}
             <TouchableOpacity
-              style={styles.manualEntryButton}
+              style={[
+                styles.manualEntryButton,
+                !hasItems && styles.manualEntryButtonDisabled,
+              ]}
               onPress={() => setShowManualEntryModal(true)}
+              disabled={!hasItems}
             >
               <ThemedText style={styles.manualEntryButtonText}>
                 {t("inventoryEdit.manualEntry")}
@@ -1490,6 +1499,10 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "600",
+  },
+  manualEntryButtonDisabled: {
+    backgroundColor: "#A0A0A0",
+    opacity: 0.6,
   },
   // Modal styles
   modalOverlay: {

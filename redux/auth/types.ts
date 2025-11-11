@@ -32,14 +32,14 @@ export type ResetPasswordRequest = {
 
 export type AuthResponse = {
   user: AuthUser;
-  access_token: string;
-  token_type: string;
-  refresh_token?: string;
+  token: string;
+  refresh_token: string;
 };
 
 export type AuthState = {
   user: AuthUser | null;
-  access_token: string | null;
+  token: string | null;
+  refresh_token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;

@@ -3,7 +3,8 @@ import { AuthState, AuthUser } from "./types";
 
 const initialState: AuthState = {
   user: null,
-  access_token: null,
+  token: null,
+  refresh_token: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -15,16 +16,19 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ user: AuthUser; access_token: string }>
+      action: PayloadAction<{ user: AuthUser; token: string; refresh_token: string }>
     ) => {
+      console.log("action.payload", action.payload);
       state.user = action.payload.user;
-      state.access_token = action.payload.access_token;
+      state.token = action.payload.token;
+      state.refresh_token = action.payload.refresh_token;
       state.isAuthenticated = true;
       state.error = null;
     },
     clearCredentials: (state) => {
       state.user = null;
-      state.access_token = null;
+      state.token = null;
+      state.refresh_token = null;
       state.isAuthenticated = false;
       state.error = null;
     },
