@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLogoutMutation } from "@/redux/auth/apiSlice";
+import { removeRefreshToken } from "@/redux/auth/secureStorage";
 import { clearCredentials } from "@/redux/auth/slice";
 import { RootState } from "@/redux/store";
 import { router } from "expo-router";
@@ -37,10 +38,12 @@ export default function SettingsScreen() {
           try {
             await logout().unwrap();
             dispatch(clearCredentials());
+            await removeRefreshToken();
             router.replace("/");
           } catch (error) {
             // Even if logout fails on server, clear local credentials
             dispatch(clearCredentials());
+            await removeRefreshToken();
             router.replace("/");
           }
         },

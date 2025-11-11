@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useLoginMutation } from "@/redux/auth/apiSlice";
+import { saveRefreshToken } from "@/redux/auth/secureStorage";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -53,6 +54,12 @@ export default function LoginScreen() {
     try {
       const result = await login({ email, password }).unwrap();
       dispatch(setCredentials(result));
+
+      // Save refresh_token to secure storage if provided
+      if (result.refresh_token) {
+        await saveRefreshToken(result.refresh_token);
+      }
+
       Alert.alert(t("login.success"), t("login.loginSuccess"));
       router.replace("/inventory");
     } catch (error: any) {

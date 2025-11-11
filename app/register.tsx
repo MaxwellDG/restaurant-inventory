@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useRegisterMutation } from "@/redux/auth/apiSlice";
+import { saveRefreshToken } from "@/redux/auth/secureStorage";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -70,6 +71,12 @@ export default function RegisterScreen() {
         password_confirmation: confirmPassword,
       }).unwrap();
       dispatch(setCredentials(result));
+
+      // Save refresh_token to secure storage if provided
+      if (result.refresh_token) {
+        await saveRefreshToken(result.refresh_token);
+      }
+
       Alert.alert(t("register.success"), t("register.registrationSuccess"));
       router.replace("/inventory");
     } catch (error: any) {
