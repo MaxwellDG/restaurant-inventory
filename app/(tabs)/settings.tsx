@@ -37,11 +37,9 @@ export default function SettingsScreen() {
         onPress: async () => {
           try {
             await logout().unwrap();
-            dispatch(clearCredentials());
-            await removeRefreshToken();
-            router.replace("/");
           } catch (error) {
-            // Even if logout fails on server, clear local credentials
+            // Continue with logout even if server call fails
+          } finally {
             dispatch(clearCredentials());
             await removeRefreshToken();
             router.replace("/");

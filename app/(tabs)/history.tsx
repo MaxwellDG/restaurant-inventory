@@ -31,9 +31,11 @@ export default function HistoryScreen() {
     isLoading,
     error,
   } = useGetOrdersQuery({
-    limit: 10,
     page: pageNumber,
   });
+
+  console.log("orders", orders);
+  console.log("error", error);
 
   const toggleExpanded = (orderId: string) => {
     setExpandedOrders((prev) => {

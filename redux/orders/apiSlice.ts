@@ -20,9 +20,6 @@ export const ordersApi = createApi({
     getOrders: builder.query<Order[], PaginationFilters>({
       query(params) {
         const queryParams = new URLSearchParams();
-        if (params.limit !== undefined) {
-          queryParams.append("limit", params.limit.toString());
-        }
         if (params.page !== undefined) {
           queryParams.append("page", params.page.toString());
         }

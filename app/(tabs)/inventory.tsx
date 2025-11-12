@@ -31,6 +31,7 @@ export default function InventoryScreen() {
 
   const { data: inventoryData = [], isLoading, error } = useGetInventoryQuery();
   console.log("inventoryData", inventoryData);
+  console.log("is loading inventory", isLoading);
 
   // Mutation hooks
   const [createCategory] = useCreateCategoryMutation();
