@@ -2,9 +2,11 @@ export type AuthUser = {
   id: number;
   name: string;
   email: string;
+  company_id: number;
   email_verified_at?: string;
   created_at: string;
   updated_at: string;
+  role: 'admin' | 'user';
 };
 
 export type LoginRequest = {

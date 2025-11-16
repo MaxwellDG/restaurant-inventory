@@ -1,20 +1,22 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useGetCompanyQuery } from "@/redux/company/apiSlice";
+import { useAppSelector } from "@/redux";
 import { router } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-
-// Dummy data for now - replace with API call later
-const dummyMembers = [
-  { id: 1, name: "John Doe", role: "admin" },
-  { id: 2, name: "Jane Smith", role: "user" },
-  { id: 3, name: "Bob Johnson", role: "user" },
-];
+import { UserCompany } from "@/redux/company/types";
 
 export default function MembersScreen() {
   const { t } = useTranslation();
+
+  const user = useAppSelector((state) => state.auth.user);
+  console.log('User', user);
+  const { data: companyData, isLoading } = useGetCompanyQuery(
+    user!.company_id
+  );
 
   return (
     <ThemedView style={styles.container}>
@@ -31,23 +33,23 @@ export default function MembersScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.companySection}>
-          <ThemedText style={styles.companyTitle}>
-            {t("members.company")}
-          </ThemedText>
-        </View>
-
         <View style={styles.membersList}>
-          {dummyMembers.map((member) => (
-            <View key={member.id} style={styles.memberItem}>
-              <ThemedText style={styles.memberName}>{member.name}</ThemedText>
-              <ThemedText style={styles.memberRole}>
-                {member.role === "admin"
-                  ? t("members.admin")
-                  : t("members.user")}
-              </ThemedText>
-            </View>
-          ))}
+          {isLoading ? (
+            <ThemedText style={styles.memberName}>
+              {t("members.loading")}
+            </ThemedText>
+          ) : (
+            (companyData?.data as UserCompany)?.members?.map((member) => (
+              <View key={member.id} style={styles.memberItem}>
+                <ThemedText style={styles.memberName}>{member.name}</ThemedText>
+                <ThemedText style={styles.memberRole}>
+                  {member.role === "admin"
+                    ? t("members.admin")
+                    : t("members.user")}
+                </ThemedText>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </ThemedView>

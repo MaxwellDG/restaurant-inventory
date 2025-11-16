@@ -4,7 +4,7 @@ import authReducer from "./auth/slice";
 import { exportApi } from "./export/apiSlice";
 import { ordersApi } from "./orders/apiSlice";
 import { productsApi } from "./products/apiSlice";
-import { userApi } from "./user/apiSlice";
+import { companiesApi } from "./company/apiSlice";
 
 const rootStore = configureStore({
   reducer: {
@@ -13,7 +13,7 @@ const rootStore = configureStore({
     [productsApi.reducerPath]: productsApi.reducer,
     [ordersApi.reducerPath]: ordersApi.reducer,
     [exportApi.reducerPath]: exportApi.reducer,
-    [userApi.reducerPath]: userApi.reducer,
+    [companiesApi.reducerPath]: companiesApi.reducer,
   },
   middleware: (getDefaultMiddleware) => {
     return getDefaultMiddleware({
@@ -26,7 +26,7 @@ const rootStore = configureStore({
       .concat(productsApi.middleware)
       .concat(ordersApi.middleware)
       .concat(exportApi.middleware)
-      .concat(userApi.middleware);
+      .concat(companiesApi.middleware);
   },
 });
 
