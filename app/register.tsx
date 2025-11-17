@@ -78,7 +78,7 @@ export default function RegisterScreen() {
       }
 
       Alert.alert(t("register.success"), t("register.registrationSuccess"));
-      router.replace("/inventory");
+      router.replace("/company");
     } catch (error: any) {
       Alert.alert(
         t("register.error"),

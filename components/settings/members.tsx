@@ -13,7 +13,6 @@ export default function MembersScreen() {
   const { t } = useTranslation();
 
   const user = useAppSelector((state) => state.auth.user);
-  console.log('User', user);
   const { data: companyData, isLoading } = useGetCompanyQuery(
     user!.company_id
   );

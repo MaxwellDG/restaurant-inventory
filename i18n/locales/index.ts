@@ -1,3 +1,5 @@
+import company from "./company.json";
+import createCompany from "./createCompany.json";
 import exportData from "./exportData.json";
 import forgotPassword from "./forgotPassword.json";
 import history from "./history.json";
@@ -13,6 +15,8 @@ import settings from "./settings.json";
 import tabs from "./tabs.json";
 
 export default {
+  company,
+  createCompany,
   exportData,
   forgotPassword,
   history,

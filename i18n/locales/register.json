@@ -1,6 +1,6 @@
 {
   "title": "Create Account",
-  "subtitle": "Sign up for your restaurant tracking account",
+  "subtitle": "Sign up for your inventory tracking account",
   "nameLabel": "Full Name",
   "namePlaceholder": "Enter your full name",
   "emailLabel": "Email Address",
@@ -21,7 +21,7 @@
   "passwordMinLength": "Password must be at least 8 characters long",
   "passwordsDoNotMatch": "Passwords do not match",
   "success": "Success",
-  "registrationSuccess": "Registration successful! Welcome to Restaurant Tracking!",
+  "registrationSuccess": "Registration successful! Welcome to Inventory Tracking!",
   "registrationFailed": "Registration failed. Please try again."
 }
 

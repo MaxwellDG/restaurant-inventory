@@ -61,7 +61,7 @@ export default function LoginScreen() {
         await saveRefreshToken(result.refresh_token);
       }
 
-      router.replace("/inventory");
+      router.replace("/company");
     } catch (error: any) {
       console.log("error", error);
       Alert.alert(

@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "restaurant-tracking",
-    "slug": "restaurant-tracking",
+    "name": "inventory-tracking",
+    "slug": "inventory-tracking",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "restauranttracking",
+    "scheme": "inventorytracking",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.restauranttracking",
+      "bundleIdentifier": "com.anonymous.inventorytracking",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
       }
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.restauranttracking"
+      "package": "com.anonymous.inventorytracking"
     },
     "web": {
       "output": "static",
