@@ -725,15 +725,17 @@ export default function InventoryScreen() {
               )}
             </ThemedView>
 
-            {/* Item Section */}
-            <View style={styles.sectionHeader}>
-              <ThemedText style={styles.sectionHeaderText}>
-                {t("inventoryEdit.itemSection")}
-              </ThemedText>
-            </View>
+            {/* Item Section - Only show if at least one category exists */}
+            {inventoryData.length > 0 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <ThemedText style={styles.sectionHeaderText}>
+                    {t("inventoryEdit.itemSection")}
+                  </ThemedText>
+                </View>
 
-            {/* Add Item Dropdown */}
-            <ThemedView style={styles.dropdownSection}>
+                {/* Add Item Dropdown */}
+                <ThemedView style={styles.dropdownSection}>
               <TouchableOpacity
                 style={styles.dropdownHeader}
                 onPress={() => setShowAddItem(!showAddItem)}
@@ -1025,6 +1027,8 @@ export default function InventoryScreen() {
                 </View>
               )}
             </ThemedView>
+              </>
+            )}
           </View>
         )}
       </ScrollView>

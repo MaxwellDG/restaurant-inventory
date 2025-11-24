@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLogoutMutation } from "@/redux/auth/apiSlice";
-import { removeRefreshToken } from "@/redux/auth/secureStorage";
+import { clearAllAuthData } from "@/redux/auth/secureStorage";
 import { clearCredentials } from "@/redux/auth/slice";
 import { RootState } from "@/redux/store";
 import { router } from "expo-router";
@@ -38,10 +38,16 @@ export default function SettingsScreen() {
           try {
             await logout().unwrap();
           } catch (error) {
+            console.error("Logout API call failed:", error);
             // Continue with logout even if server call fails
           } finally {
+            // Clear Redux state
             dispatch(clearCredentials());
-            await removeRefreshToken();
+            
+            // Clear all persisted auth data
+            await clearAllAuthData();
+            
+            // Navigate to login screen
             router.replace("/");
           }
         },

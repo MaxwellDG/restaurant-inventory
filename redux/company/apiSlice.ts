@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { Company, UserCompany } from "./types";
+import { Company, JoinCompanyResponse, UserCompany } from "./types";
 import { baseQuery } from "../api";
 
 export const companiesApi = createApi({
@@ -8,8 +8,26 @@ export const companiesApi = createApi({
   endpoints: (builder) => ({
     getCompany: builder.query<{ data: UserCompany | Company }, number>({
       query: (id) => `/companies/${id}`,
+      transformResponse: (response: any) => {
+        console.log("RAW COMPANY RESPONSE:", response);
+        return response;
+      },
+    }),
+    createCompany: builder.mutation<{ data: Company }, { name: string }>({
+      query: ({ name }) => ({
+        url: "/companies",
+        method: "POST",
+        body: { name }
+      }),
+    }),
+    joinCompany: builder.mutation<JoinCompanyResponse, { company_id: number }>({
+      query: ({ company_id }) => ({
+        url: "/companies/join",
+        method: "POST",
+        body: { company_id }
+      }),
     }),
   }),
 });
 
-export const { useGetCompanyQuery } = companiesApi;
+export const { useGetCompanyQuery, useCreateCompanyMutation, useJoinCompanyMutation } = companiesApi;

@@ -1,21 +1,24 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useGetCompanyQuery } from "@/redux/company/apiSlice";
 import { useAppSelector } from "@/redux";
+import { useGetCompanyQuery } from "@/redux/company/apiSlice";
+import { UserCompany } from "@/redux/company/types";
 import { router } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { UserCompany } from "@/redux/company/types";
 
 export default function MembersScreen() {
   const { t } = useTranslation();
 
   const user = useAppSelector((state) => state.auth.user);
-  const { data: companyData, isLoading } = useGetCompanyQuery(
-    user!.company_id
-  );
+  const {
+    data: companyData,
+    isLoading,
+  } = useGetCompanyQuery(user?.company_id || 0, {
+    skip: !user?.company_id
+  });
 
   return (
     <ThemedView style={styles.container}>

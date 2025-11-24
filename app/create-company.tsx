@@ -1,13 +1,12 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import * as ImagePicker from "expo-image-picker";
+import { useCreateCompanyMutation } from "@/redux/company/apiSlice";
+import { RootState } from "@/redux/store";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -15,41 +14,58 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSelector, useDispatch } from "react-redux";
+import { updateUser } from "@/redux/auth/slice";
 
 export default function CreateCompanyScreen() {
   const { t } = useTranslation();
   const [companyName, setCompanyName] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const dispatch = useDispatch();
 
-  const handlePickImage = async () => {
-    // Request permission
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const [createCompany, { isLoading }] = useCreateCompanyMutation();
+ 
+  // DEBUG: Check auth state
+  const authState = useSelector((state: RootState) => state.auth);
+  console.log("AUTH STATE IN CREATE-COMPANY:", authState);
 
-    if (permissionResult.granted === false) {
-      Alert.alert(
-        t("createCompany.permissionRequired"),
-        t("createCompany.permissionMessage")
-      );
-      return;
-    }
+  // const handlePickImage = async () => {
+  //   // Request permission
+  //   const permissionResult =
+  //     await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    // Open image picker
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+  //   if (permissionResult.granted === false) {
+  //     Alert.alert(
+  //       t("createCompany.permissionRequired"),
+  //       t("createCompany.permissionMessage")
+  //     );
+  //     return;
+  //   }
 
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+  //   // Open image picker
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [1, 1],
+  //     quality: 0.8,
+  //   });
 
-  const handleContinue = () => {
-    // TODO: Handle company creation
-    router.replace("/inventory");
+  //   if (!result.canceled && result.assets[0]) {
+  //     setImageUri(result.assets[0].uri);
+  //   }
+  // };
+
+  const handleContinue = async () => {
+    await createCompany({ name: companyName })
+      .unwrap()
+      .then((response) => {
+        // Update user in Redux with the new company_id
+        dispatch(updateUser({ company_id: response.data.id }));
+        router.replace("/inventory");
+      })
+      .catch((error) => {
+        console.log("error", error);
+        Alert.alert(t("createCompany.error"), error.data.message);
+      });
   };
 
   return (
@@ -63,7 +79,7 @@ export default function CreateCompanyScreen() {
             {t("createCompany.title")}
           </ThemedText>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.imagePicker}
             onPress={handlePickImage}
           >
@@ -77,7 +93,7 @@ export default function CreateCompanyScreen() {
                 </ThemedText>
               </View>
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TextInput
             style={styles.input}
@@ -95,7 +111,7 @@ export default function CreateCompanyScreen() {
               !companyName.trim() && styles.buttonDisabled,
             ]}
             onPress={handleContinue}
-            disabled={!companyName.trim()}
+            disabled={!companyName.trim() || isLoading}
           >
             <ThemedText style={styles.buttonText}>
               {t("createCompany.continue")}

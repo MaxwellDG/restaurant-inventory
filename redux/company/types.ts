@@ -1,4 +1,4 @@
-import { Role, User } from "../user/types"
+import { AuthUser } from "../auth/types"
 
 export interface Company {
     id: number
@@ -6,5 +6,9 @@ export interface Company {
 }
 
 export interface UserCompany extends Company {
-    members: User[]
+    members: AuthUser[]
+}
+
+export interface JoinCompanyResponse {
+    company: Company
 }

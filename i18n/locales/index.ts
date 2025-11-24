@@ -5,6 +5,7 @@ import forgotPassword from "./forgotPassword.json";
 import history from "./history.json";
 import inventory from "./inventory.json";
 import inventoryEdit from "./inventoryEdit.json";
+import joinCompany from "./joinCompany.json";
 import login from "./login.json";
 import members from "./members.json";
 import modal from "./modal.json";
@@ -22,6 +23,7 @@ export default {
   history,
   inventory,
   inventoryEdit,
+  joinCompany,
   login,
   members,
   modal,

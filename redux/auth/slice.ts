@@ -18,14 +18,15 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{
         user: AuthUser;
-        token: string;
-        refresh_token: string;
+        token?: string;
+        refresh_token?: string;
+        company_id?: number;
       }>
     ) => {
       console.log("action.payload", action.payload);
       state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.refresh_token = action.payload.refresh_token;
+      state.token = action.payload.token || null;
+      state.refresh_token = action.payload.refresh_token || null;
       state.isAuthenticated = true;
       state.error = null;
     },

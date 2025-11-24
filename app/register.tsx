@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useRegisterMutation } from "@/redux/auth/apiSlice";
-import { saveRefreshToken } from "@/redux/auth/secureStorage";
+import { save, saveSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
 import { setCredentials } from "@/redux/auth/slice";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -66,15 +66,24 @@ export default function RegisterScreen() {
     try {
       const result = await register({
         name,
-        email,
+        email: email.toLowerCase(),
         password,
         password_confirmation: confirmPassword,
       }).unwrap();
+      console.log("result", result);
+
+      // Update Redux state
       dispatch(setCredentials(result));
 
-      // Save refresh_token to secure storage if provided
+      // Persist auth data to storage
       if (result.refresh_token) {
-        await saveRefreshToken(result.refresh_token);
+        await saveSecure(STORAGE_KEYS.REFRESH_TOKEN, result.refresh_token);
+      }
+      if (result.token) {
+        await save(STORAGE_KEYS.ACCESS_TOKEN, result.token);
+      }
+      if (result.user) {
+        await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
       }
 
       Alert.alert(t("register.success"), t("register.registrationSuccess"));

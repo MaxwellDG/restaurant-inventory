@@ -13,8 +13,7 @@ export default function CompanyScreen() {
   };
 
   const handleJoinCompany = () => {
-    // TODO: Navigate to join company flow
-    router.replace("/inventory");
+    router.push("/join-company");
   };
 
   return (
