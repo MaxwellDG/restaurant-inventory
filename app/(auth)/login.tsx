@@ -70,7 +70,7 @@ export default function LoginScreen() {
       }
 
       // Navigate to company selection/creation screen
-      router.replace("/(auth)/company");
+      router.replace("/company");
     } catch (error: any) {
       console.log("error", error);
       Alert.alert(

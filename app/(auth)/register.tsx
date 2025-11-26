@@ -86,7 +86,7 @@ export default function RegisterScreen() {
         await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
       }
 
-      router.replace("/(auth)/company");
+      router.replace("/company");
     } catch (error: any) {
       Alert.alert(
         t("register.error"),

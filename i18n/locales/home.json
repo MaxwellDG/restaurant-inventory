@@ -1,7 +1,0 @@
-{
-  "welcome": "Welcome, {{name}}!",
-  "subtitle": "Manage your inventory and orders efficiently",
-  "manageInventory": "View and manage your inventory items",
-  "createOrders": "Create new orders for your inventory",
-  "viewHistory": "View your order history and analytics"
-}

@@ -8,9 +8,19 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
+const HIDDEN_TABS_SCREENS = [
+  "/(tabs)/company",
+  "/(tabs)/members",
+  "/(tabs)/export-data",
+  "/(tabs)/join-company",
+  "/(tabs)/create-company",
+];
+
 export default function TabLayout() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
+
+  // const isTabHiddenScreen = HIDDEN_TABS_SCREENS.includes(location.pathname);
 
   return (
     <Tabs
@@ -20,7 +30,7 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarShowLabel: false,
         tabBarStyle: {
-          // display: isLoginScreen ? "none" : "flex",
+          // display: isTabHiddenScreen ? "none" : "flex",
           height: 90,
           paddingBottom: 20,
           overflow: "visible",
@@ -28,21 +38,18 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: t("tabs.home"),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="inventory"
         options={{
           title: t("tabs.inventory"),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="shippingbox.fill" color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

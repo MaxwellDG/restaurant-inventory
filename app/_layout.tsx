@@ -3,7 +3,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -77,6 +77,19 @@ function Navigation() {
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
+  const router = useRouter();
+  const segments = useSegments();
+
+  // Automatically redirect when auth is cleared
+  useEffect(() => {
+    console.log("isAuthenticated", isAuthenticated);
+    const inTabsGroup = segments[0] === "(tabs)";
+
+    if (!isAuthenticated && inTabsGroup) {
+      // User logged out while on authenticated screen - redirect to login
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated]);
 
   if (isAuthenticated) {
     // Authenticated user routes
@@ -88,7 +101,9 @@ function Navigation() {
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
-        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="company" options={{ headerShown: false }} />
+        <Stack.Screen name="join-company" options={{ headerShown: false }} />
+        <Stack.Screen name="create-company" options={{ headerShown: false }} />
         {/* Hide auth routes from authenticated users */}
         <Stack.Screen name="(auth)" options={{ href: null }} />
       </Stack>
@@ -99,7 +114,6 @@ function Navigation() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
         {/* Hide authenticated routes from unauthenticated users */}
         <Stack.Screen name="(tabs)" options={{ href: null }} />
         <Stack.Screen name="modal" options={{ href: null }} />
