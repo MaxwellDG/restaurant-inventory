@@ -23,7 +23,6 @@ export const baseQuery = (auth: boolean = false, path: string = "") => {
     baseUrl: fullUrl,
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
-      console.log("state.auth.token", state.auth.token);
       if (state.auth.token) {
         headers.set("Authorization", "Bearer " + state.auth.token);
       }

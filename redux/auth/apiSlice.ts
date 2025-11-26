@@ -3,6 +3,7 @@ import { baseQuery } from "../api";
 import { API_SLICE_NAME, AUTH_ENDPOINTS } from "./const";
 import {
   AuthResponse,
+  AuthUser,
   ForgotPasswordRequest,
   LoginRequest,
   RegisterRequest,
@@ -15,6 +16,15 @@ export const authApi = createApi({
   baseQuery: baseQuery(false, ""),
   tagTypes: ["auth"],
   endpoints: (builder) => ({
+    getUser: builder.query<AuthUser, void>({
+      query() {
+        return {
+          method: "GET",
+          url: AUTH_ENDPOINTS.USER,
+        };
+      },
+      providesTags: ["auth"],
+    }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query(body) {
         return {
@@ -83,6 +93,7 @@ export const authApi = createApi({
 });
 
 export const {
+  useGetUserQuery,
   useRegisterMutation,
   useLoginMutation,
   useLogoutMutation,

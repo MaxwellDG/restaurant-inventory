@@ -82,9 +82,6 @@ export default function RegisterScreen() {
       if (result.token) {
         await save(STORAGE_KEYS.ACCESS_TOKEN, result.token);
       }
-      if (result.user) {
-        await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
-      }
 
       router.replace("/company");
     } catch (error: any) {

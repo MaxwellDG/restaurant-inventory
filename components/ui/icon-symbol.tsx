@@ -25,6 +25,7 @@ const MAPPING = {
   "shippingbox.fill": "shopping-bag",
   "cart.fill": "shopping-cart",
   "doc.text.fill": "receipt",
+  "doc.on.doc": "content-copy",
   "list.bullet": "list",
   magnifyingglass: "search",
   plus: "add",
@@ -34,6 +35,10 @@ const MAPPING = {
   "clock.fill": "schedule",
   "gearshape.fill": "settings",
   "line.3.horizontal.decrease": "filter-list",
+  "person.2.fill": "group",
+  "square.and.arrow.up": "upload",
+  "rectangle.portrait.and.arrow.right": "logout",
+  xmark: "close",
 } as IconMapping;
 
 /**

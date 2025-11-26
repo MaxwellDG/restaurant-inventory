@@ -2,7 +2,10 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLogoutMutation } from "@/redux/auth/apiSlice";
 import { clearAllAuthData } from "@/redux/auth/secureStorage";
 import { clearCredentials } from "@/redux/auth/slice";
+import { useGetCompanyQuery } from "@/redux/company/apiSlice";
+import { UserCompany } from "@/redux/company/types";
 import { RootState } from "@/redux/store";
+import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +23,19 @@ export default function SettingsScreen() {
   const [logout, { isLoading }] = useLogoutMutation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  const { data: companyData } = useGetCompanyQuery(user?.company_id || 0, {
+    skip: !user?.company_id,
+  });
+
+  const company = companyData?.data as UserCompany;
+
+  const handleCopyCompanyId = async () => {
+    if (company?.id) {
+      await Clipboard.setStringAsync(company.id.toString());
+      Alert.alert(t("settings.copied"), t("settings.companyIdCopied"));
+    }
+  };
 
   const handleExportData = () => {
     router.push("/export-data");
@@ -64,6 +80,18 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{t("settings.title")}</Text>
 
+      {/* Company Info Subtitle */}
+      {company && (
+        <View style={styles.companyInfo}>
+          <Text style={styles.companyText}>
+            {company.name} #{company.id}
+          </Text>
+          <TouchableOpacity onPress={handleCopyCompanyId}>
+            <IconSymbol name="doc.on.doc" size={20} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* User Info Section */}
       {user && (
         <View style={styles.section}>
@@ -91,10 +119,13 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <TouchableOpacity
-          style={styles.sectionHeader}
+          style={styles.exportButton}
           onPress={() => router.push("/members")}
         >
-          <Text style={styles.sectionTitle}>{t("settings.members")}</Text>
+          <View style={styles.exportContent}>
+            <IconSymbol name="person.2.fill" size={24} color="#007AFF" />
+            <Text style={styles.exportText}>{t("settings.members")}</Text>
+          </View>
           <IconSymbol name="chevron.right" size={16} color="#999" />
         </TouchableOpacity>
       </View>
@@ -136,6 +167,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#333",
+  },
+  companyInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  companyText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
   },
   section: {
     marginBottom: 30,

@@ -11,9 +11,9 @@ import "react-native-reanimated";
 import { Provider, useSelector } from "react-redux";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { authApi } from "@/redux/auth/apiSlice";
 import { get, getSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
 import { setCredentials } from "@/redux/auth/slice";
-import { AuthUser } from "@/redux/auth/types";
 import rootStore, { RootState } from "@/redux/store";
 
 import "@/i18n";
@@ -25,30 +25,46 @@ function AuthRehydrator({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const rehydrateAuth = async () => {
       try {
-        // Load persisted auth data
-        const [token, refreshToken, userDataStr] = await Promise.all([
+        // Load persisted auth tokens (user data will be fetched from API)
+        const [token, refreshToken] = await Promise.all([
           get(STORAGE_KEYS.ACCESS_TOKEN),
           getSecure(STORAGE_KEYS.REFRESH_TOKEN),
-          get(STORAGE_KEYS.USER_DATA),
         ]);
 
-        // Parse user data
-        const user: AuthUser | null = userDataStr
-          ? JSON.parse(userDataStr)
-          : null;
-
-        // If we have auth data, restore it to Redux
-        if (token && user) {
+        // If we have a token, restore auth state and fetch user data
+        if (token) {
+          // First, set the token so API calls can be authenticated
           rootStore.dispatch(
             setCredentials({
-              user,
+              user: null, // User data will be fetched from API
               token,
               refresh_token: refreshToken || undefined,
             })
           );
-          console.log("Auth state rehydrated from storage");
+          console.log("Auth tokens rehydrated from storage");
+
+          // Fetch user data from the API
+          try {
+            const result = await rootStore
+              .dispatch(authApi.endpoints.getUser.initiate())
+              .unwrap();
+            
+            // Update Redux with the user data
+            rootStore.dispatch(
+              setCredentials({
+                user: result,
+                token,
+                refresh_token: refreshToken || undefined,
+              })
+            );
+            console.log("User data fetched from API", result);
+          } catch (error) {
+            console.error("Failed to fetch user data:", error);
+            // If fetching user data fails, clear the invalid token
+            rootStore.dispatch(setCredentials({ user: null, token: null }));
+          }
         } else {
-          console.log("No persisted auth data found");
+          console.log("No persisted auth tokens found");
         }
       } catch (error) {
         console.error("Error rehydrating auth state:", error);
@@ -71,6 +87,9 @@ function AuthRehydrator({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+// todo: if the user closes the app after they've been registered but BEFORE they've chosen a company, then they should
+// be redirected to the 'company' screen on app load
 
 // Navigation component that conditionally renders based on auth state
 function Navigation() {

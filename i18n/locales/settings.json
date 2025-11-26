@@ -8,6 +8,8 @@
   "logout": "Logout",
   "logoutTitle": "Logout",
   "logoutConfirm": "Are you sure you want to logout?",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "copied": "Copied!",
+  "companyIdCopied": "Company ID copied to clipboard"
 }
 

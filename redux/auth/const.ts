@@ -6,6 +6,7 @@ export const AUTH_ENDPOINTS = {
   REGISTER: "/register",
   LOGIN: "/login",
   LOGOUT: "/logout",
+  USER: "/user",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   VERIFY_EMAIL: "/verify-email",

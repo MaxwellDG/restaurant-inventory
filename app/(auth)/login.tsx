@@ -65,9 +65,6 @@ export default function LoginScreen() {
       if (result.token) {
         await save(STORAGE_KEYS.ACCESS_TOKEN, result.token);
       }
-      if (result.user) {
-        await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
-      }
 
       // Navigate to company selection/creation screen
       router.replace("/company");

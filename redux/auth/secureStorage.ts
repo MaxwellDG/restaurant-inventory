@@ -5,7 +5,6 @@ import * as SecureStore from "expo-secure-store";
 export const STORAGE_KEYS = {
   REFRESH_TOKEN: "refresh_token",
   ACCESS_TOKEN: "access_token",
-  USER_DATA: "user_data",
 } as const;
 
 /**
@@ -86,7 +85,6 @@ export const clearAllAuthData = async (): Promise<void> => {
     await Promise.all([
       removeSecure(STORAGE_KEYS.REFRESH_TOKEN),
       remove(STORAGE_KEYS.ACCESS_TOKEN),
-      remove(STORAGE_KEYS.USER_DATA),
     ]);
   } catch (error) {
     console.error("Failed to clear auth data:", error);

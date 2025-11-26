@@ -17,7 +17,7 @@ const authSlice = createSlice({
     setCredentials: (
       state,
       action: PayloadAction<{
-        user: AuthUser;
+        user: AuthUser | null;
         token?: string;
         refresh_token?: string;
         company_id?: number;
@@ -27,7 +27,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token || null;
       state.refresh_token = action.payload.refresh_token || null;
-      state.isAuthenticated = true;
+      state.isAuthenticated = !!action.payload.token; // Authenticated if we have a token
       state.error = null;
     },
     clearCredentials: (state) => {
