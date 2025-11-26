@@ -48,7 +48,7 @@ function AuthRehydrator({ children }: { children: React.ReactNode }) {
             const result = await rootStore
               .dispatch(authApi.endpoints.getUser.initiate())
               .unwrap();
-            
+
             // Update Redux with the user data
             rootStore.dispatch(
               setCredentials({
