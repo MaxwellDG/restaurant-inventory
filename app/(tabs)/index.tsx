@@ -1,180 +1,63 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useLoginMutation } from "@/redux/auth/apiSlice";
-import { save, saveSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
-import { setCredentials } from "@/redux/auth/slice";
+import { RootState } from "@/redux/store";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useDispatch } from "react-redux";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSelector } from "react-redux";
 
-export default function LoginScreen() {
+export default function HomeScreen() {
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [login, { isLoading }] = useLoginMutation();
-  const dispatch = useDispatch();
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleLogin = async () => {
-    if (!email.trim()) {
-      Alert.alert(t("login.error"), t("login.enterEmail"));
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Alert.alert(t("login.error"), t("login.enterValidEmail"));
-      return;
-    }
-
-    if (!password.trim()) {
-      Alert.alert(t("login.error"), t("login.enterPassword"));
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert(t("login.error"), t("login.passwordMinLength"));
-      return;
-    }
-
-    try {
-      const result = await login({ email, password }).unwrap();
-      console.log("result", result);
-
-      // Update Redux state
-      dispatch(setCredentials(result));
-
-      // Persist auth data to storage
-      if (result.refresh_token) {
-        await saveSecure(STORAGE_KEYS.REFRESH_TOKEN, result.refresh_token);
-      }
-      if (result.token) {
-        await save(STORAGE_KEYS.ACCESS_TOKEN, result.token);
-      }
-      if (result.user) {
-        await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
-      }
-
-      router.replace("/company");
-    } catch (error: any) {
-      console.log("error", error);
-      Alert.alert(
-        t("login.error"),
-        error?.data?.message || t("login.loginFailed")
-      );
-    }
-  };
-
-  const handleSignUp = () => {
-    router.push("/register");
-  };
-
-  const handleForgotPassword = () => {
-    router.push("/forgot-password");
-  };
+  const user = useSelector((state: RootState) => state.auth.user);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <ThemedView style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <ThemedText type="title" style={styles.title}>
-              {t("login.title")}
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.title}>
+            {t("home.welcome", { name: user?.name || "" })}
+          </ThemedText>
+          <ThemedText style={styles.subtitle}>{t("home.subtitle")}</ThemedText>
+        </View>
+
+        <View style={styles.content}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push("/(tabs)/inventory")}
+          >
+            <ThemedText style={styles.cardTitle}>
+              {t("tabs.inventory")}
             </ThemedText>
-            <ThemedText style={styles.subtitle}>
-              {t("login.subtitle")}
+            <ThemedText style={styles.cardSubtitle}>
+              {t("home.manageInventory")}
             </ThemedText>
-          </View>
+          </TouchableOpacity>
 
-          {/* Form */}
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>
-                {t("login.emailLabel")}
-              </ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder={t("login.emailPlaceholder")}
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>
-                {t("login.passwordLabel")}
-              </ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder={t("login.passwordPlaceholder")}
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-            >
-              <ThemedText style={styles.forgotPasswordText}>
-                {t("login.forgotPassword")}
-              </ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.loginButton,
-                isLoading && styles.loginButtonDisabled,
-              ]}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              <ThemedText style={styles.loginButtonText}>
-                {isLoading ? t("login.signingIn") : t("login.signIn")}
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <ThemedText style={styles.footerText}>
-              {t("login.footerText")}{" "}
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push("/(tabs)/orders")}
+          >
+            <ThemedText style={styles.cardTitle}>
+              {t("tabs.newOrders")}
             </ThemedText>
-            <TouchableOpacity onPress={handleSignUp}>
-              <ThemedText style={styles.signUpText}>
-                {t("login.signUp")}
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </ThemedView>
+            <ThemedText style={styles.cardSubtitle}>
+              {t("home.createOrders")}
+            </ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push("/(tabs)/history")}
+          >
+            <ThemedText style={styles.cardTitle}>{t("tabs.orders")}</ThemedText>
+            <ThemedText style={styles.cardSubtitle}>
+              {t("home.viewHistory")}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </ThemedView>
   );
 }
 
@@ -184,85 +67,39 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+    padding: 20,
   },
   header: {
-    alignItems: "center",
-    marginBottom: 40,
+    marginTop: 40,
+    marginBottom: 30,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     marginBottom: 8,
-    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
     opacity: 0.7,
-    textAlign: "center",
     lineHeight: 22,
   },
-  form: {
-    flex: 1,
+  content: {
+    gap: 16,
   },
-  inputContainer: {
-    marginBottom: 20,
+  card: {
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: "#F8F9FA",
+    borderWidth: 1,
+    borderColor: "#E1E5E9",
   },
-  label: {
-    fontSize: 16,
+  cardTitle: {
+    fontSize: 20,
     fontWeight: "600",
     marginBottom: 8,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E1E5E9",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    backgroundColor: "#F8F9FA",
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  loginButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  loginButtonDisabled: {
-    backgroundColor: "#A0A0A0",
-  },
-  loginButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  footerText: {
+  cardSubtitle: {
     fontSize: 14,
     opacity: 0.7,
-  },
-  signUpText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
   },
 });

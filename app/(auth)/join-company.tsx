@@ -37,7 +37,7 @@ export default function JoinCompanyScreen() {
         .then((response) => {
           console.log("response", response);
           dispatch(updateUser({ company_id: response.company.id }));
-          router.replace("/inventory");
+          router.replace("/(tabs)/inventory");
         })
         .catch((error) => {
           console.log("error", error);

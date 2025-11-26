@@ -8,13 +8,13 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { get, getSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
 import { setCredentials } from "@/redux/auth/slice";
 import { AuthUser } from "@/redux/auth/types";
-import rootStore from "@/redux/store";
+import rootStore, { RootState } from "@/redux/store";
 
 import "@/i18n";
 
@@ -72,6 +72,42 @@ function AuthRehydrator({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Navigation component that conditionally renders based on auth state
+function Navigation() {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+
+  if (isAuthenticated) {
+    // Authenticated user routes
+    return (
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="modal"
+          options={{ presentation: "modal", title: "Modal" }}
+        />
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        {/* Hide auth routes from authenticated users */}
+        <Stack.Screen name="(auth)" options={{ href: null }} />
+      </Stack>
+    );
+  } else {
+    // Unauthenticated user routes
+    return (
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        {/* Hide authenticated routes from unauthenticated users */}
+        <Stack.Screen name="(tabs)" options={{ href: null }} />
+        <Stack.Screen name="modal" options={{ href: null }} />
+      </Stack>
+    );
+  }
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -81,27 +117,7 @@ export default function RootLayout() {
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="company" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="create-company"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="forgot-password"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="reset-password"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
-            />
-          </Stack>
+          <Navigation />
           <StatusBar style="auto" />
         </ThemeProvider>
       </AuthRehydrator>

@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { updateUser } from "@/redux/auth/slice";
 import { useCreateCompanyMutation } from "@/redux/company/apiSlice";
 import { RootState } from "@/redux/store";
 import { router } from "expo-router";
@@ -14,8 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSelector, useDispatch } from "react-redux";
-import { updateUser } from "@/redux/auth/slice";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function CreateCompanyScreen() {
   const { t } = useTranslation();
@@ -23,7 +23,7 @@ export default function CreateCompanyScreen() {
   const dispatch = useDispatch();
 
   const [createCompany, { isLoading }] = useCreateCompanyMutation();
- 
+
   // DEBUG: Check auth state
   const authState = useSelector((state: RootState) => state.auth);
   console.log("AUTH STATE IN CREATE-COMPANY:", authState);
@@ -60,7 +60,7 @@ export default function CreateCompanyScreen() {
       .then((response) => {
         // Update user in Redux with the new company_id
         dispatch(updateUser({ company_id: response.data.id }));
-        router.replace("/inventory");
+        router.replace("/(tabs)/inventory");
       })
       .catch((error) => {
         console.log("error", error);

@@ -1,4 +1,4 @@
-import { Tabs, usePathname } from "expo-router";
+import { Tabs } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -11,9 +11,6 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 export default function TabLayout() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
-  const pathname = usePathname();
-
-  const isLoginScreen = pathname === "/";
 
   return (
     <Tabs

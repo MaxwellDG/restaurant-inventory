@@ -1,9 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useRegisterMutation } from "@/redux/auth/apiSlice";
-import { save, saveSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
-import { setCredentials } from "@/redux/auth/slice";
-import { router } from "expo-router";
+import { useResetPasswordMutation } from "@/redux/auth/apiSlice";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,88 +14,81 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useDispatch } from "react-redux";
 
-export default function RegisterScreen() {
+export default function ResetPasswordScreen() {
   const { t } = useTranslation();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [register, { isLoading }] = useRegisterMutation();
-  const dispatch = useDispatch();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+  const { token } = useLocalSearchParams();
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleRegister = async () => {
-    if (!name.trim()) {
-      Alert.alert(t("register.error"), t("register.enterName"));
-      return;
-    }
-
+  const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert(t("register.error"), t("register.enterEmail"));
+      Alert.alert(t("resetPassword.error"), t("resetPassword.enterEmail"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert(t("register.error"), t("register.enterValidEmail"));
+      Alert.alert(
+        t("resetPassword.error"),
+        t("resetPassword.enterValidEmail")
+      );
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert(t("register.error"), t("register.enterPassword"));
+      Alert.alert(t("resetPassword.error"), t("resetPassword.enterNewPassword"));
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert(t("register.error"), t("register.passwordMinLength"));
+      Alert.alert(t("resetPassword.error"), t("resetPassword.passwordMinLength"));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(t("register.error"), t("register.passwordsDoNotMatch"));
+      Alert.alert(t("resetPassword.error"), t("resetPassword.passwordsDoNotMatch"));
+      return;
+    }
+
+    if (!token) {
+      Alert.alert(t("resetPassword.error"), t("resetPassword.invalidToken"));
       return;
     }
 
     try {
-      const result = await register({
-        name,
-        email: email.toLowerCase(),
+      await resetPassword({
+        email,
         password,
         password_confirmation: confirmPassword,
+        token: token as string,
       }).unwrap();
-      console.log("result", result);
-
-      // Update Redux state
-      dispatch(setCredentials(result));
-
-      // Persist auth data to storage
-      if (result.refresh_token) {
-        await saveSecure(STORAGE_KEYS.REFRESH_TOKEN, result.refresh_token);
-      }
-      if (result.token) {
-        await save(STORAGE_KEYS.ACCESS_TOKEN, result.token);
-      }
-      if (result.user) {
-        await save(STORAGE_KEYS.USER_DATA, JSON.stringify(result.user));
-      }
-
-      Alert.alert(t("register.success"), t("register.registrationSuccess"));
-      router.replace("/company");
+      Alert.alert(
+        t("resetPassword.success"),
+        t("resetPassword.passwordResetSuccess"),
+        [
+          {
+            text: t("resetPassword.ok"),
+            onPress: () => router.replace("/(auth)/login"),
+          },
+        ]
+      );
     } catch (error: any) {
       Alert.alert(
-        t("register.error"),
-        error?.data?.message || t("register.registrationFailed")
+        t("resetPassword.error"),
+        error?.data?.message || t("resetPassword.failedToReset")
       );
     }
   };
 
   const handleBackToLogin = () => {
-    router.back();
+    router.replace("/(auth)/login");
   };
 
   return (
@@ -110,10 +101,10 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>
-              {t("register.title")}
+              {t("resetPassword.title")}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              {t("register.subtitle")}
+              {t("resetPassword.subtitle")}
             </ThemedText>
           </View>
 
@@ -121,26 +112,11 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>
-                {t("register.nameLabel")}
+                {t("resetPassword.emailLabel")}
               </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder={t("register.namePlaceholder")}
-                placeholderTextColor="#999"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <ThemedText style={styles.label}>
-                {t("register.emailLabel")}
-              </ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder={t("register.emailPlaceholder")}
+                placeholder={t("resetPassword.emailPlaceholder")}
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -152,11 +128,11 @@ export default function RegisterScreen() {
 
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>
-                {t("register.passwordLabel")}
+                {t("resetPassword.newPasswordLabel")}
               </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder={t("register.passwordPlaceholder")}
+                placeholder={t("resetPassword.newPasswordPlaceholder")}
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -168,11 +144,11 @@ export default function RegisterScreen() {
 
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>
-                {t("register.confirmPasswordLabel")}
+                {t("resetPassword.confirmNewPasswordLabel")}
               </ThemedText>
               <TextInput
                 style={styles.input}
-                placeholder={t("register.confirmPasswordPlaceholder")}
+                placeholder={t("resetPassword.confirmNewPasswordPlaceholder")}
                 placeholderTextColor="#999"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -184,16 +160,16 @@ export default function RegisterScreen() {
 
             <TouchableOpacity
               style={[
-                styles.registerButton,
-                isLoading && styles.registerButtonDisabled,
+                styles.resetButton,
+                isLoading && styles.resetButtonDisabled,
               ]}
-              onPress={handleRegister}
+              onPress={handleResetPassword}
               disabled={isLoading}
             >
-              <ThemedText style={styles.registerButtonText}>
+              <ThemedText style={styles.resetButtonText}>
                 {isLoading
-                  ? t("register.creatingAccount")
-                  : t("register.createAccount")}
+                  ? t("resetPassword.resetting")
+                  : t("resetPassword.resetPassword")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -201,11 +177,11 @@ export default function RegisterScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              {t("register.footerText")}{" "}
+              {t("resetPassword.footerText")}{" "}
             </ThemedText>
             <TouchableOpacity onPress={handleBackToLogin}>
               <ThemedText style={styles.signInText}>
-                {t("register.signIn")}
+                {t("resetPassword.signIn")}
               </ThemedText>
             </TouchableOpacity>
           </View>
@@ -264,17 +240,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#F8F9FA",
   },
-  registerButton: {
+  resetButton: {
     backgroundColor: "#007AFF",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 20,
   },
-  registerButtonDisabled: {
+  resetButtonDisabled: {
     backgroundColor: "#A0A0A0",
   },
-  registerButtonText: {
+  resetButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",

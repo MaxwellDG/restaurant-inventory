@@ -136,10 +136,6 @@ export default function InventoryScreen() {
         }).unwrap();
         setNewCategoryName("");
         setShowAddCategory(false);
-        Alert.alert(
-          t("inventoryEdit.success"),
-          t("inventoryEdit.categoryAddedSuccess")
-        );
       } catch (error) {
         Alert.alert(
           t("inventoryEdit.error"),
@@ -183,11 +179,6 @@ export default function InventoryScreen() {
         setNewItemPrice("");
         setSelectedCategory("");
         setShowAddItem(false);
-
-        Alert.alert(
-          t("inventoryEdit.success"),
-          t("inventoryEdit.itemAddedSuccess")
-        );
       } catch (error) {
         Alert.alert(
           t("inventoryEdit.error"),
@@ -211,12 +202,6 @@ export default function InventoryScreen() {
       if (categoryToDelete) {
         try {
           await deleteCategory(categoryToDelete.id).unwrap();
-          Alert.alert(
-            t("inventoryEdit.success"),
-            t("inventoryEdit.categoryDeletedSuccess", {
-              name: deleteCategoryName.trim(),
-            })
-          );
           setDeleteCategoryName("");
           setShowDeleteCategory(false);
         } catch (error) {
@@ -266,13 +251,6 @@ export default function InventoryScreen() {
             ...categoryToEdit,
             name: editCategoryName.trim(),
           }).unwrap();
-          Alert.alert(
-            t("inventoryEdit.success"),
-            t("inventoryEdit.categoryRenamedSuccess", {
-              oldName: selectedEditCategory,
-              newName: editCategoryName.trim(),
-            })
-          );
           setSelectedEditCategory("");
           setEditCategoryName("");
           setShowEditCategory(false);
@@ -322,10 +300,6 @@ export default function InventoryScreen() {
             name: editItemName.trim(),
             price: editItemPrice.trim() ? parseFloat(editItemPrice) : undefined,
           }).unwrap();
-          Alert.alert(
-            t("inventoryEdit.success"),
-            t("inventoryEdit.itemUpdatedSuccess", { name: selectedEditItem })
-          );
           setSelectedEditItemCategory("");
           setSelectedEditItem("");
           setEditItemName("");
@@ -356,12 +330,6 @@ export default function InventoryScreen() {
       if (itemToDelete) {
         try {
           await deleteItem(itemToDelete.id).unwrap();
-          Alert.alert(
-            t("inventoryEdit.success"),
-            t("inventoryEdit.itemDeletedSuccess", {
-              name: deleteItemName.trim(),
-            })
-          );
           setDeleteItemName("");
           setShowDeleteItem(false);
         } catch (error) {
@@ -451,20 +419,6 @@ export default function InventoryScreen() {
             return;
           }
         }
-
-        const action = isBuying
-          ? t("inventoryEdit.buying")
-          : t("inventoryEdit.selling");
-        const quantityText = !isBuying ? ` (quantity: ${quantityToSell})` : "";
-        Alert.alert(
-          t("inventoryEdit.success"),
-          t("inventoryEdit.manualEntrySubmitted", {
-            action,
-            itemName: selectedManualItem,
-            categoryName: selectedManualCategory,
-            quantityText,
-          })
-        );
 
         // Reset form and close modal
         setSelectedManualCategory("");
