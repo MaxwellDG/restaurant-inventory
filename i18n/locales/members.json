@@ -2,6 +2,7 @@
   "title": "Members",
   "company": "Company",
   "admin": "Admin",
-  "user": "User"
+  "user": "User",
+  "loading": "Loading..."
 }
 

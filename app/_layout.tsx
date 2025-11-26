@@ -82,11 +82,9 @@ function Navigation() {
 
   // Automatically redirect when auth is cleared
   useEffect(() => {
-    console.log("isAuthenticated", isAuthenticated);
     const inTabsGroup = segments[0] === "(tabs)";
 
     if (!isAuthenticated && inTabsGroup) {
-      // User logged out while on authenticated screen - redirect to login
       router.replace("/(auth)/login");
     }
   }, [isAuthenticated]);

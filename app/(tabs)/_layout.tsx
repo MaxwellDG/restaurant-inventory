@@ -8,14 +8,6 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
-const HIDDEN_TABS_SCREENS = [
-  "/(tabs)/company",
-  "/(tabs)/members",
-  "/(tabs)/export-data",
-  "/(tabs)/join-company",
-  "/(tabs)/create-company",
-];
-
 export default function TabLayout() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
@@ -42,14 +34,17 @@ export default function TabLayout() {
         options={{
           title: t("tabs.inventory"),
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="shippingbox.fill" color={color} />
+            <IconSymbol size={28} name="cart.fill" color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="update"
         options={{
-          href: null,
+          title: t("tabs.update"),
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="shippingbox.fill" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -61,6 +56,12 @@ export default function TabLayout() {
               <IconSymbol size={32} name="plus" color="white" />
             </CustomTabBarButton>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

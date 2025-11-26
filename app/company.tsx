@@ -9,11 +9,11 @@ export default function CompanyScreen() {
   const { t } = useTranslation();
 
   const handleCreateCompany = () => {
-    router.push("/create-company");
+    router.replace("/create-company");
   };
 
   const handleJoinCompany = () => {
-    router.push("/join-company");
+    router.replace("/join-company");
   };
 
   return (

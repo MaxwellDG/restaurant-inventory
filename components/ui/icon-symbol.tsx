@@ -23,6 +23,7 @@ const MAPPING = {
   "chevron.left": "chevron-left",
   "chevron.right": "chevron-right",
   "shippingbox.fill": "shopping-bag",
+  "cart.fill": "shopping-cart",
   "doc.text.fill": "receipt",
   "list.bullet": "list",
   magnifyingglass: "search",

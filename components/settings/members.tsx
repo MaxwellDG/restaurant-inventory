@@ -13,12 +13,23 @@ export default function MembersScreen() {
   const { t } = useTranslation();
 
   const user = useAppSelector((state) => state.auth.user);
-  const {
-    data: companyData,
-    isLoading,
-  } = useGetCompanyQuery(user?.company_id || 0, {
-    skip: !user?.company_id
-  });
+  const { data: companyData, isLoading } = useGetCompanyQuery(
+    user?.company_id || 0,
+    {
+      skip: !user?.company_id,
+    }
+  );
+
+  const sortedMembers = React.useMemo(() => {
+    if (!companyData?.data) return [];
+    const copy = [...(companyData?.data as UserCompany)?.members];
+
+    return copy.sort((a, b) => {
+      if (a.role === "admin" && b.role !== "admin") return -1;
+      if (a.role !== "admin" && b.role === "admin") return 1;
+      return 0;
+    });
+  }, [companyData]);
 
   return (
     <ThemedView style={styles.container}>
@@ -41,7 +52,7 @@ export default function MembersScreen() {
               {t("members.loading")}
             </ThemedText>
           ) : (
-            (companyData?.data as UserCompany)?.members?.map((member) => (
+            sortedMembers?.map((member) => (
               <View key={member.id} style={styles.memberItem}>
                 <ThemedText style={styles.memberName}>{member.name}</ThemedText>
                 <ThemedText style={styles.memberRole}>
