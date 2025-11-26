@@ -39,6 +39,12 @@ const MAPPING = {
   "square.and.arrow.up": "upload",
   "rectangle.portrait.and.arrow.right": "logout",
   xmark: "close",
+  calendar: "calendar-today",
+  "camera.fill": "camera-alt",
+  "checkmark.circle.fill": "check-circle",
+  "xmark.circle.fill": "cancel",
+  "exclamationmark.triangle.fill": "warning",
+  "info.circle.fill": "info",
 } as IconMapping;
 
 /**

@@ -10,6 +10,8 @@ import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 import { Provider, useSelector } from "react-redux";
 
+import { ToastContainer } from "@/components/ui/ToastContainer";
+import { ToastProvider } from "@/contexts/ToastContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authApi } from "@/redux/auth/apiSlice";
 import { get, getSecure, STORAGE_KEYS } from "@/redux/auth/secureStorage";
@@ -144,14 +146,17 @@ export default function RootLayout() {
 
   return (
     <Provider store={rootStore}>
-      <AuthRehydrator>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Navigation />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </AuthRehydrator>
+      <ToastProvider>
+        <AuthRehydrator>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <Navigation />
+            <StatusBar style="auto" />
+            <ToastContainer />
+          </ThemeProvider>
+        </AuthRehydrator>
+      </ToastProvider>
     </Provider>
   );
 }

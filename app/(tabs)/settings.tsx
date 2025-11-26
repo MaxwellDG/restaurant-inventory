@@ -1,4 +1,6 @@
+import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useToast } from "@/contexts/ToastContext";
 import { useLogoutMutation } from "@/redux/auth/apiSlice";
 import { clearAllAuthData } from "@/redux/auth/secureStorage";
 import { clearCredentials } from "@/redux/auth/slice";
@@ -23,6 +25,7 @@ export default function SettingsScreen() {
   const [logout, { isLoading }] = useLogoutMutation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showToast } = useToast();
 
   const { data: companyData } = useGetCompanyQuery(user?.company_id || 0, {
     skip: !user?.company_id,
@@ -33,6 +36,7 @@ export default function SettingsScreen() {
   const handleCopyCompanyId = async () => {
     if (company?.id) {
       await Clipboard.setStringAsync(company.id.toString());
+      showToast(t("settings.companyIdCopied"), "success");
     }
   };
 
@@ -77,7 +81,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{t("settings.title")}</Text>
+      <ThemedText type="title" style={styles.title}>{t("settings.title")}</ThemedText>
 
       {/* Company Info Subtitle */}
       {company && (
@@ -86,7 +90,7 @@ export default function SettingsScreen() {
             {company.name} #{company.id}
           </Text>
           <TouchableOpacity onPress={handleCopyCompanyId}>
-            <IconSymbol name="doc.on.doc" size={20} color="#007AFF" />
+            <IconSymbol name="doc.on.doc" size={20} color="#666" />
           </TouchableOpacity>
         </View>
       )}
@@ -158,7 +162,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F9FA",
     paddingTop: 60,
     paddingHorizontal: 20,
   },
@@ -188,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 16,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e9ecef",
@@ -209,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 16,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e9ecef",
@@ -222,7 +226,7 @@ const styles = StyleSheet.create({
   userInfo: {
     paddingVertical: 15,
     paddingHorizontal: 16,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e9ecef",
